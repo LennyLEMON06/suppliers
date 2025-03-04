@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Фильтр предложений</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'font/bootstrap-icons.css' %}">
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #dbeafe, #93c5fd);
+            background-attachment: fixed;
+        }
+
+        .text-blue {
+            color: #007bff;
+        }
+
+        .table-dark th {
+            background-color: #007bff;
+            color: white;
+        }
+        /* Отступ для содержимого, чтобы оно не перекрывалось навигационной панелью */
+        .content {
+            padding-top: 80px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    {% include 'header.html' %}
+
+    <div class="container content">
+        <h2 class="text-center text-primary fw-bold mb-4">Фильтр предложений</h2>
+
+        <div class="row g-3 align-items-end">
+            <div class="col-md-8">
+                <!-- Форма фильтрации -->
+                <form method="GET" class="row g-3">
+                    <div class="col-md-5">
+                        <label for="date" class="form-label text-blue">Выберите дату:</label>
+                        <input type="date" name="date" id="date" class="form-control" value="{{ selected_date }}">
+                    </div>
+    
+                    <div class="col-md-5">
+                        <label for="supplier" class="form-label text-blue">Выберите поставщика:</label>
+                        <select name="supplier" id="supplier" class="form-select">
+                            <option value="">Все поставщики</option>
+                            {% for supplier in suppliers %}
+                                <option value="{{ supplier.id }}" {% if supplier.id == selected_supplier_id %}selected{% endif %}>
+                                    {{ supplier.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+    
+                    <div class="col-auto d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary px-3" style="height: 38px;">
+                            <i class="bi bi-funnel"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+    
+            <div class="col-md-4 d-flex justify-content-end">
+                <!-- Форма экспорта в Excel -->
+                <form method="GET" action="{% url 'export_prices' %}">
+                    <input type="hidden" name="date" value="{{ selected_date }}">
+                    <input type="hidden" name="supplier" value="{{ selected_supplier_id }}">
+                    <button type="submit" class="btn btn-success">📤 Экспорт в Excel</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Таблица -->
+        <div class="table-responsive mt-3">
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Продукт</th>
+                        <th>Поставщик</th>
+                        <th>Цена</th>
+                        <th>Производитель</th>
+                        <th>Дата добавления</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for price in prices %}
+                    <tr>
+                        <td>{{ price.product.name }}</td>
+                        <td>{{ price.supplier.name }}</td>
+                        <td>{{ price.price }}</td>
+                        <td>{{ price.manufacturer }}</td>
+                        <td>{{ price.date_added }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">Нет данных за выбранную дату</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    {% include 'footer.html' %}
+
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
+

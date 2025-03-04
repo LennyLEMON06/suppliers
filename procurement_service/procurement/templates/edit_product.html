@@ -1,0 +1,121 @@
+{% load custom_filters %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактировать продукт</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'font/bootstrap-icons.css' %}">
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: linear-gradient(135deg, #dbeafe, #93c5fd);
+            background-attachment: fixed;
+            color: #333;
+        }
+
+        .card {
+            border-radius: 15px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background: #fff;
+            box-shadow: 0 0 10px rgba(108, 117, 125, 0.3);
+            border-color: #6c757d;
+        }
+
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+        }
+
+        .btn-custom {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            border: none;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            margin-right: 10px;
+            min-width: 120px;
+        }
+
+        .btn-save {
+            background-color: #198754;
+            color: white;
+        }
+
+        .btn-cancel {
+            background-color: white;
+            color: #007bff;
+        }
+
+        .btn-save:hover {
+            background-color: #157347;
+        }
+
+        .btn-cancel:hover {
+            background-color: #f0f8ff;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            font-size: 18px;
+            color: #6c757d;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'header.html' %}
+    <div class="container d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+        <div class="col-md-6">
+            <div class="card shadow-lg">
+                <div class="card-header">
+                    <h3 class="mb-0">Редактировать продукт</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="productForm">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                    </form>
+                </div>
+            </div>
+            <div class="button-container">
+                <button type="submit" form="productForm" class="btn-custom btn-save">Сохранить</button>
+                <a href="{% url 'product_list' %}" class="btn-custom btn-cancel">Отмена</a>
+                <div class="loading">⏳ Сохранение...</div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+
+</html>

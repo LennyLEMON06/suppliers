@@ -1,0 +1,132 @@
+{% load custom_filters %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Таблица продуктов и поставщиков</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'font/bootstrap-icons.css' %}">
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #dbeafe, #93c5fd);
+            background-attachment: fixed;
+        }
+
+        /* Фиксированная ширина для первого столбца */
+        .table-container table th:first-child,
+        .table-container table td:first-child {
+            position: sticky;
+            left: 0;
+            background-color: #f8f9fa;
+            /* Цвет фона */
+            z-index: 2;
+            font-weight: bold;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            white-space: nowrap;
+            border-radius: 10px;
+            background-color: white;
+            padding: 15px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            min-width: 100%;
+        }
+
+        th,
+        td {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .best-price {
+            background-color: #d1e7dd;
+            font-weight: bold;
+            color: #0f5132;
+        }
+
+        /* Отступ для содержимого, чтобы оно не перекрывалось навигационной панелью */
+        .content {
+            padding-top: 80px;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    {% include 'header.html' %}
+
+    <div class="container content">
+        <h1 class="text-center text-primary fw-bold">Таблица продуктов и поставщиков</h1>
+
+        <div class="d-flex align-items-center gap-3 mb-3 mt-4">
+            <!-- Форма выбора даты -->
+            <form method="GET" class="d-flex align-items-center gap-2">
+                <input type="date" name="date" class="form-control" value="{{ selected_date }}">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i>
+                </button>
+            </form>
+            <a href="{% url 'price_list' %}" class="btn btn-primary">Фильтр предложений</a>
+            <a href="{% url 'export_to_excel' %}" class="btn btn-success">📤 Экспорт в Excel</a>
+        </div>
+
+
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Наименование товара</th>
+                        <th>Средняя потребность на месяц</th>
+                        <th>Единица измерения</th>
+                        {% for supplier in suppliers %}
+                        <th>{{ supplier.name }}</th>
+                        <th>Производитель</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for product in table_data %}
+                    <tr>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.quantity }}</td>
+                        <td>{{ product.unit }}</td>
+                        {% for supplier in suppliers %}
+                        <td class="{% if supplier.name == product.best_price_supplier %}best-price{% endif %}">
+                            {{ product.supplier_prices|get:supplier.name|get:"price"|default:"-" }}
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ product.supplier_prices|get:supplier.name|get:"manufacturer"|default:"-" }}
+                            </small>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{{ suppliers|length|mul:2|add:3 }}">Нет данных за выбранную дату</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+
+            </table>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+
+</html>

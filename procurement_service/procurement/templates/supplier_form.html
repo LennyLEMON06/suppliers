@@ -1,0 +1,132 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Form</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'font/bootstrap-icons.css' %}">
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #dbeafe, #93c5fd);
+            background-attachment: fixed;
+        }
+
+        @media (max-width: 767px) {
+            .col-md-5 {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+
+            .toggle-label {
+                order: 1;
+                flex: 1;
+            }
+
+            .toggle-info {
+                order: 2;
+            }
+
+            .extra-info {
+                order: 3;
+                width: 100%;
+            }
+
+            .row.align-items-center {
+                flex-direction: column;
+                /* Выстраиваем элементы в колонку */
+                align-items: stretch;
+                /* Растягиваем элементы на всю ширину */
+            }
+
+            .col-md-6,
+            .col-md-3 {
+                width: 100%;
+                /* Занимаем всю ширину экрана */
+                max-width: 100%;
+                /* Предотвращаем расширение сверх ширины экрана */
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+    <div class="container min-vh-100 d-flex justify-content-center align-items-center">
+        <div class="card shadow-lg p-4 rounded" style="max-width: 800px; width: 100%;">
+            <div class="card-body">
+                <h2 class="text-center mb-4 text-primary">Введите цены на товары</h2>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% if form.errors %}
+                    <div class="alert alert-danger" role="alert">
+                        Пожалуйста, исправьте ошибки ниже.
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        {% for product in products %}
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-4">
+                                <label for="price_{{ product.id }}" class="form-label fw-semibold mb-0">
+                                    {{ product.name }} ({{ product.quantity }} {{ product.unit }})
+                                </label>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="number" step="0.01" min="0" class="form-control"
+                                    id="price_{{ product.id }}" name="price_{{ product.id }}" placeholder="Цена"
+                                    required>
+                            </div>
+                            <div class="col-md-1 text-center">
+                                <input type="checkbox" class="toggle-info" id="toggle_info_{{ product.id }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="toggle_info_{{ product.id }}"
+                                    class="form-label text-secondary toggle-label">
+                                    Выберите, если хотите добавить производителя
+                                </label>
+                                <input type="text" class="form-control extra-info d-none"
+                                    id="manufacturer_{{ product.id }}" name="manufacturer_{{ product.id }}"
+                                    placeholder="Дополнительная информация">
+                            </div>
+                        </div>
+
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Отправить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+        document.querySelectorAll('.toggle-info').forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                let row = this.closest('.row');
+                let label = row.querySelector('.toggle-label');
+                let infoField = row.querySelector('.extra-info');
+
+                if (this.checked) {
+                    label.classList.add('d-none'); // Скрываем текст
+                    infoField.classList.remove('d-none'); // Показываем поле
+                } else {
+                    label.classList.remove('d-none'); // Показываем текст
+                    infoField.classList.add('d-none'); // Скрываем поле
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

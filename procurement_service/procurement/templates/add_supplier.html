@@ -1,0 +1,111 @@
+{% load custom_filters %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить поставщика</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'font/bootstrap-icons.css' %}">
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: linear-gradient(135deg, #dbeafe, #93c5fd);
+            background-attachment: fixed;
+            color: #333;
+        }
+
+        .card {
+            border-radius: 15px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background: #fff;
+            box-shadow: 0 0 10px rgba(108, 117, 125, 0.3);
+            border-color: #6c757d;
+        }
+
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            font-size: 18px;
+            color: #6c757d;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'header.html' %}
+    <div class="container d-flex align-items-center justify-content-center mt-5" style="min-height: 100vh;">
+        <div class="col-md-6">
+            <div class="card shadow-lg">
+                <div class="card-header">
+                    <h3 class="mb-0">Добавить поставщика</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <strong>Ошибки:</strong>
+                            <ul>
+                                {% for field in form %}
+                                {% for error in field.errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <div class="loading">⏳ Сохранение...</div>
+                    </form>
+                </div>
+            </div>
+            <div class="d-flex justify-content-center gap-2 mt-3">
+                <a href="{% url 'supplier_list' %}" class="btn btn-success">
+                    <i class="fas fa-list"></i> Список поставщиков
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+
+</html>
