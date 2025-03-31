@@ -26,18 +26,28 @@ class PriceForm(forms.ModelForm):
         fields = ['product', 'price']
 
     def clean_price(self):
-        price = self.cleaned_data.get("price", "").strip()
+        price_value = self.cleaned_data['price']
+        
+        # Проверка на пустое значение
+        if not price_value:
+            raise forms.ValidationError('Цена не может быть пустой.')
 
-        if not price:
-            return None  # Позволяем пустое значение, если в модели price=null=True
-
-        # Заменяем запятую на точку (если юзер вводит 1,99 вместо 1.99)
-        price = price.replace(",", ".")
-
+        # Преобразование строки в Decimal и проверка на корректность
         try:
-            return Decimal(price)
+            # Преобразуем цену, заменяя запятую на точку (если необходимо)
+            price = Decimal(price_value.replace(',', '.'))
         except InvalidOperation:
-            raise ValidationError("Введите корректную цену (например: 10.50)")
+            raise forms.ValidationError('Введите корректную цену (например, 10.50).')
+
+        # Проверка на отрицательные значения
+        if price < 0:
+            raise forms.ValidationError('Цена не может быть отрицательной.')
+
+        # Проверка на слишком большие значения (например, максимальная цена 1000000)
+        if price > 1000000:
+            raise forms.ValidationError('Цена не может превышать 1 000 000.')
+
+        return price
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

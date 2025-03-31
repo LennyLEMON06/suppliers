@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Product, Supplier, Price, SupplierToken
 from .forms import *
+from datetime import datetime, time
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -11,6 +12,7 @@ from django.utils.dateparse import parse_date
 import openpyxl
 from django.http import HttpResponse, HttpResponseForbidden
 import datetime
+from django.utils import timezone
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill, Alignment, Border, Side
 from decimal import Decimal, InvalidOperation
@@ -139,13 +141,13 @@ def upload_excel(request):
 
                 return redirect('product_supplier_table')  # Перенаправление на таблицу
             except Exception as e:
-                return render(request, 'upload_excel.html', {
+                return render(request, 'excel/upload_excel.html', {
                     'form': form,
                     'error': f"Ошибка при обработке файла: {str(e)}"
                 })
     else:
         form = UploadFileForm()
-    return render(request, 'upload_excel.html', {'form': form})
+    return render(request, 'excel/upload_excel.html', {'form': form})
 
 def user_login(request):
     if request.method == 'POST':
@@ -156,8 +158,8 @@ def user_login(request):
             login(request, user)
             return redirect('product_supplier_table')  # Перенаправление на главную страницу
         else:
-            return render(request, 'login.html', {'error': 'Неверное имя пользователя или пароль'})
-    return render(request, 'login.html')
+            return render(request, 'login/login.html', {'error': 'Неверное имя пользователя или пароль'})
+    return render(request, 'login/login.html')
 
 def user_logout(request):
     logout(request)
@@ -172,7 +174,7 @@ def register(request):
             return redirect('home')  # Перенаправление на главную страницу
     else:
         form = UserCreationForm()
-    return render(request, 'register.html', {'form': form})
+    return render(request, 'login/register.html', {'form': form})
 
 @login_required
 def home(request):
@@ -181,7 +183,7 @@ def home(request):
 @login_required
 def product_list(request):
     products = Product.objects.all()  # Получаем все продукты из базы данных
-    return render(request, 'product_list.html', {'products': products})
+    return render(request, 'product/product_list.html', {'products': products})
 
 @login_required
 def add_product(request):
@@ -196,7 +198,7 @@ def add_product(request):
         form = ProductForm()
     
     # Рендерим шаблон с формой
-    return render(request, 'add_product.html', {'form': form})
+    return render(request, 'product/product_card.html', {'form': form})
 
 @login_required
 def edit_product(request, product_id):
@@ -208,7 +210,7 @@ def edit_product(request, product_id):
             return redirect('product_list')  # Перенаправляем на список продуктов
     else:
         form = ProductForm(instance=product)  # Показываем форму с текущими данными продукта
-    return render(request, 'edit_product.html', {'form': form})
+    return render(request, 'product/product_card.html', {'form': form})
 
 @login_required
 def delete_product(request, product_id):
@@ -216,12 +218,12 @@ def delete_product(request, product_id):
     if request.method == 'POST':
         product.delete()  # Удаляем продукт
         return redirect('product_list')  # Перенаправляем на список продуктов
-    return render(request, 'confirm_delete_product.html', {'product': product})
+    return render(request, 'product/confirm_delete_product.html', {'product': product})
 
 @login_required
 def supplier_list(request):
     suppliers = Supplier.objects.all()  # Получаем всех поставщиков из базы данных
-    return render(request, 'supplier_list.html', {'suppliers': suppliers})
+    return render(request, 'supplier/supplier_list.html', {'suppliers': suppliers})
 
 @login_required
 def add_supplier(request):
@@ -236,7 +238,7 @@ def add_supplier(request):
         form = SupplierForm()
     
     # Рендерим шаблон с формой
-    return render(request, 'add_supplier.html', {'form': form})
+    return render(request, 'supplier/supplier_card.html', {'form': form})
 
 @login_required
 def edit_supplier(request, supplier_id):
@@ -248,7 +250,7 @@ def edit_supplier(request, supplier_id):
             return redirect('supplier_list')  # Перенаправляем на список поставщиков
     else:
         form = SupplierForm(instance=supplier)  # Показываем форму с текущими данными поставщика
-    return render(request, 'edit_supplier.html', {'form': form})
+    return render(request, 'supplier/supplier_card.html', {'form': form})
 
 @login_required
 def delete_supplier(request, supplier_id):
@@ -256,7 +258,7 @@ def delete_supplier(request, supplier_id):
     if request.method == 'POST':
         supplier.delete()  # Удаляем поставщика
         return redirect('supplier_list')  # Перенаправляем на список поставщиков
-    return render(request, 'confirm_delete_supplier.html', {'supplier': supplier})
+    return render(request, 'supplier/confirm_delete_supplier.html', {'supplier': supplier})
 
 @login_required
 def get_supplier_token(request, supplier_id):
@@ -274,57 +276,156 @@ def supplier_form(request, supplier_id, token):
 
     if token_obj.is_expired():
         return HttpResponseForbidden("Срок действия ссылки истек.")
+    
+    price_history = {}
+    for product in products:
+        history = Price.objects.filter(
+            product=product,
+            supplier=supplier
+        ).order_by('-date_added')[:5]  # Последние 5 записей
+        price_history[str(product.id)] = [
+            {
+                'price': item.price,
+                'manufacturer': item.manufacturer,
+                'date_added': item.date_added.strftime('%d.%m.%Y %H:%M')
+            }
+            for item in history
+        ]
 
     if request.method == 'POST':
+        print("POST Data:", request.POST)
+        has_errors = False
+        form_errors = {}  # Словарь для хранения ошибок по product_id
+        form_data = {
+            'prices': {},
+            'manufacturers': {}
+        }
+
         for product in products:
+            product_id = str(product.id)
             price_str = request.POST.get(f'price_{product.id}', "").strip()
             manufacturer = request.POST.get(f'manufacturer_{product.id}', "").strip()
-
+            
+            # Сохраняем введенные данные
+            form_data['prices'][product_id] = price_str
+            form_data['manufacturers'][product_id] = manufacturer
+            
+            # Пропускаем если оба поля пустые
             if not price_str and not manufacturer:
                 continue
-
-            try:
-                price = Decimal(price_str.replace(",", "."))
-            except (InvalidOperation, ValueError):
-                messages.error(request, f"Некорректная цена для {product.name}")
+                
+            # Валидация цены
+            price_error = None
+            price = None
+            
+            if price_str:
+                try:
+                    price_str_clean = price_str.replace(" ", "").replace(",", ".")
+                    if not all(c.isdigit() or c == '.' for c in price_str_clean):
+                        raise ValueError("Некорректный формат числа")
+                    
+                    price = Decimal(price_str_clean)
+                    
+                    if price <= 0:
+                        price_error = "Цена должна быть положительным числом"
+                except (InvalidOperation, ValueError, TypeError) as e:
+                    price_error = "Введите корректное число (разделитель дробной части - точка или запятая)"
+            
+            # Валидация производителя
+            manufacturer_error = None
+            if manufacturer and len(manufacturer) > 255:
+                manufacturer_error = "Слишком длинное название (макс. 255 символов)"
+            
+            # Сохраняем ошибки
+            if price_error or manufacturer_error:
+                has_errors = True
+                form_errors[product_id] = {
+                    'price': price_error,
+                    'manufacturer': manufacturer_error
+                }
                 continue
+            
+            # Всегда создаем новую запись, если есть данные (убрали проверку на существующую цену)
+            try:
+                Price.objects.create(
+                    product=product,
+                    supplier=supplier,
+                    price=price,
+                    manufacturer=manufacturer,
+                    date_added=timezone.now()
+                )
+            except Exception as e:
+                has_errors = True
+                form_errors[product_id] = {
+                    'general': f"Ошибка сохранения: {str(e)}"
+                }
 
-            existing_price = Price.objects.filter(product=product, supplier=supplier).order_by('-date_added').first()
-
-            if not existing_price or existing_price.price != price or existing_price.manufacturer != manufacturer:
-                Price.objects.create(product=product, supplier=supplier, price=price, manufacturer=manufacturer)
-
+        if has_errors:
+            return render(request, 'supplier_form/supplier_form.html', {
+                "products": products,
+                "supplier": supplier,
+                "form_data": form_data,
+                "form_errors": form_errors,
+                "price_history": price_history  # Добавляем историю в контекст
+            })
+        
         messages.success(request, "Данные успешно сохранены!")
         return redirect('success')
 
-    return render(request, 'supplier_form.html', {"products": products, "supplier": supplier})
+    return render(request, 'supplier_form/supplier_form.html', {
+        "products": products,
+        "supplier": supplier,
+        "form_data": None,
+        "form_errors": None,
+        "price_history": price_history  # Добавляем историю в контекст
+    })
 
 def success(request):
-    return render(request, 'success.html')
+    return render(request, 'supplier_form/success.html')
+
+
+def parse_time(time_str):
+    """Преобразует строку времени в объект time"""
+    if not time_str:
+        return None
+    return datetime.strptime(time_str, '%H:%M').time()
 
 @login_required
 def price_list(request):
-    # Получаем параметры из GET-запроса
-    date_str = request.GET.get('date')  # Дата
-    supplier_id = request.GET.get('supplier')  # Поставщик
+    date_str = request.GET.get('date')
+    time_from = request.GET.get('time_from')
+    time_to = request.GET.get('time_to')
+    supplier_id = request.GET.get('supplier')
     
-    # Сначала фильтруем по дате
+    prices = Price.objects.all()
+    
     if date_str:
-        selected_date = parse_date(date_str)  # Преобразуем строку в дату
-        prices = Price.objects.filter(date_added__date=selected_date)  # Фильтруем по дате
-    else:
-        prices = Price.objects.all()  # Если даты нет, показываем все
+        try:
+            selected_date = parse_date(date_str)
+            prices = prices.filter(date_added__date=selected_date)
+            
+            # Фильтрация по времени, если указано
+            if time_from:
+                datetime_from = datetime.combine(selected_date, parse_time(time_from))
+                prices = prices.filter(date_added__gte=datetime_from)
+            
+            if time_to:
+                datetime_to = datetime.combine(selected_date, parse_time(time_to))
+                prices = prices.filter(date_added__lte=datetime_to)
+                
+        except:
+            prices = Price.objects.none()
 
-    # Фильтруем по поставщику, если указан
     if supplier_id:
         prices = prices.filter(supplier_id=supplier_id)
 
-    # Получаем список поставщиков для выпадающего списка
     suppliers = Supplier.objects.all()
 
     return render(request, 'price_list.html', {
-        'prices': prices,
+        'prices': prices.order_by('-date_added'),
         'selected_date': date_str,
+        'time_from': time_from,
+        'time_to': time_to,
         'suppliers': suppliers,
         'selected_supplier_id': supplier_id,
     })
@@ -428,7 +529,7 @@ def product_supplier_table(request):
 
         # Собираем цены и производителей всех поставщиков для текущего продукта
         for supplier in suppliers:
-            price = supplier_prices.filter(product=product, supplier=supplier).first()
+            price = supplier_prices.filter(product=product, supplier=supplier).order_by('-date_added').first()
             product_data['supplier_prices'][supplier.name] = {
                 'price': price.price if price else None,
                 'manufacturer': price.manufacturer if price else None
