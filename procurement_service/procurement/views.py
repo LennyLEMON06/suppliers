@@ -18,6 +18,9 @@ from openpyxl.styles import PatternFill, Alignment, Border, Side
 from decimal import Decimal, InvalidOperation
 from django.contrib import messages
 from django.http import JsonResponse
+from django.utils.timezone import make_aware
+from datetime import datetime, time
+import re
 
 # Функция для создания границ
 def get_border():
@@ -384,11 +387,25 @@ def success(request):
     return render(request, 'supplier_form/success.html')
 
 
+
+
 def parse_time(time_str):
-    """Преобразует строку времени в объект time"""
+    """Парсит время из строки в формате HH:MM"""
     if not time_str:
         return None
-    return datetime.strptime(time_str, '%H:%M').time()
+    
+    # Проверяем стандартный формат
+    if re.match(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$', time_str):
+        return datetime.strptime(time_str, '%H:%M').time()
+    
+    # Пробуем парсить другие форматы
+    try:
+        parts = time_str.split(':')
+        hours = int(parts[0])
+        minutes = int(parts[1]) if len(parts) > 1 else 0
+        return time(hours % 24, minutes % 60)
+    except (ValueError, IndexError):
+        return None
 
 @login_required
 def price_list(request):
@@ -400,21 +417,17 @@ def price_list(request):
     prices = Price.objects.all()
     
     if date_str:
-        try:
-            selected_date = parse_date(date_str)
-            prices = prices.filter(date_added__date=selected_date)
-            
-            # Фильтрация по времени, если указано
-            if time_from:
-                datetime_from = datetime.combine(selected_date, parse_time(time_from))
-                prices = prices.filter(date_added__gte=datetime_from)
-            
-            if time_to:
-                datetime_to = datetime.combine(selected_date, parse_time(time_to))
-                prices = prices.filter(date_added__lte=datetime_to)
-                
-        except:
-            prices = Price.objects.none()
+        selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        time_from = parse_time(request.GET.get('time_from'))
+        time_to = parse_time(request.GET.get('time_to'))
+        
+        if time_from:
+            datetime_from = make_aware(datetime.combine(selected_date, time_from))
+            prices = prices.filter(date_added__gte=datetime_from)
+        
+        if time_to:
+            datetime_to = make_aware(datetime.combine(selected_date, time_to))
+            prices = prices.filter(date_added__lte=datetime_to)
 
     if supplier_id:
         prices = prices.filter(supplier_id=supplier_id)
