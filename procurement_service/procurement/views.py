@@ -11,7 +11,7 @@ import openpyxl
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import timezone  # Для работы с часовыми поясами
 from openpyxl.utils import get_column_letter
-from openpyxl.styles import PatternFill, Alignment, Border, Side
+from openpyxl.styles import PatternFill, Alignment, Border, Side, Font
 from decimal import Decimal, InvalidOperation
 from django.contrib import messages
 from django.http import JsonResponse
@@ -437,27 +437,36 @@ def price_list(request):
 
 @login_required
 def export_prices_to_excel(request):
+    # Получаем параметры фильтрации
     date_str = request.GET.get('date')
     supplier_id = request.GET.get('supplier')
 
-    prices = Price.objects.all()
+    # Получаем данные с фильтрацией
+    prices = Price.objects.select_related('product', 'supplier').all()
+    
     if date_str:
         try:
             selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
             prices = prices.filter(date_added__date=selected_date)
         except ValueError:
             pass
+    
     if supplier_id:
         prices = prices.filter(supplier_id=supplier_id)
 
+    # Создаем Excel-файл
     workbook = openpyxl.Workbook()
     sheet = workbook.active
     sheet.title = "Цены"
+    
+    # Настройка страницы
     sheet.page_setup.orientation = sheet.ORIENTATION_LANDSCAPE
     sheet.page_setup.fitToPage = True
     sheet.page_setup.fitToWidth = 1
-    sheet.page_setup.fitToHeight = 0
 
+    # Стили для ячеек
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="007bff", fill_type="solid")
     border = Border(
         left=Side(style='thin'),
         right=Side(style='thin'),
@@ -465,39 +474,66 @@ def export_prices_to_excel(request):
         bottom=Side(style='thin')
     )
 
-    headers = ["Продукт", "Поставщик", "Цена", "Производитель", "Дата добавления"]
+    # Заголовки (соответствуют HTML-таблице)
+    headers = [
+        "Продукт",
+        "Поставщик",
+        "Цена",
+        "Кол-во",
+        "Ед. изм.",
+        "Производитель",
+        "Дата и время"
+    ]
     sheet.append(headers)
 
+    # Применяем стили к заголовкам
+    for cell in sheet[1]:
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = border
+
+    # Заполняем данными
     for price in prices:
         row = [
-            price.product.name,
-            price.supplier.name,
-            price.price,
-            price.manufacturer,
-            timezone.localtime(price.date_added).strftime("%Y-%m-%d %H:%M")
+            str(price.product.name)[:20],  # Обрезаем до 20 символов как truncatechars
+            str(price.supplier.name)[:20],
+            float(price.price),  # Преобразуем Decimal к float для Excel
+            int(price.product.quantity) if price.product.quantity else 0,
+            str(price.product.unit),
+            str(price.manufacturer)[:20] if price.manufacturer else "",
+            timezone.localtime(price.date_added).strftime("%d.%m.%Y %H:%M:%S")  # Формат как в HTML
         ]
         sheet.append(row)
 
-    for row in sheet.iter_rows():
+    # Применяем стили к данным
+    for row in sheet.iter_rows(min_row=2):
         for cell in row:
             cell.border = border
-            cell.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+            cell.alignment = Alignment(horizontal="left", vertical="center")
+        
+        # Форматирование числовых полей
+        row[2].number_format = '#,##0.00'  # Формат цены с 2 знаками после запятой
+        row[3].number_format = '0'  # Целое число для количества
 
-    for col_num, column_cells in enumerate(sheet.columns, start=1):
-        max_length = 0
-        column_letter = get_column_letter(col_num)
-        for cell in column_cells:
-            if cell.value:
-                max_length = max(max_length, len(str(cell.value)))
-        sheet.column_dimensions[column_letter].width = max_length + 2
+    # Автоподбор ширины колонок
+    for col in sheet.columns:
+        max_length = max(
+            len(str(cell.value)) if cell.value else 0
+            for cell in col
+        )
+        column_letter = col[0].column_letter
+        sheet.column_dimensions[column_letter].width = min(max_length + 2, 30)  # Ограничение максимальной ширины
 
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    filename = f"prices_{current_date}.xlsx"
+    # Формируем имя файла
+    filename = f"prices_{datetime.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
 
-    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    # Создаем HTTP-ответ
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'},
+    )
     workbook.save(response)
-
+    
     return response
 
 @login_required
