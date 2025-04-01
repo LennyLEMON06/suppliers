@@ -23,6 +23,8 @@
             background: linear-gradient(135deg, #dbeafe, #93c5fd);
             background-attachment: fixed;
             font-size: 15px;
+            display: flex;
+            flex-direction: column;
         }
 
         .main-container {
@@ -30,6 +32,7 @@
             padding-top: calc(var(--header-height) + 15px);
             padding-bottom: calc(var(--footer-height) + 15px);
             animation: fadeIn var(--animation-duration) ease-out;
+            flex: 1;
         }
 
         @keyframes fadeIn {

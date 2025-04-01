@@ -15,8 +15,9 @@
             --footer-height: 40px;
             --animation-duration: 0.3s;
         }
-        
-        html, body {
+
+        html,
+        body {
             height: 100%;
             margin: 0;
             padding: 0;
@@ -35,8 +36,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Контейнер таблицы с анимацией */
@@ -46,14 +54,21 @@
             -webkit-overflow-scrolling: touch;
             background-color: white;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             margin-bottom: 15px;
             animation: slideUp 0.5s ease-out;
         }
 
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Таблица */
@@ -65,8 +80,15 @@
 
         /* Анимация строк таблицы */
         @keyframes fadeInRow {
-            from { opacity: 0; transform: translateX(-10px); }
-            to { opacity: 1; transform: translateX(0); }
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .price-table tbody tr {
@@ -74,12 +96,29 @@
         }
 
         /* Задержка анимации для каждой строки */
-        .price-table tbody tr:nth-child(1) { animation-delay: 0.1s; }
-        .price-table tbody tr:nth-child(2) { animation-delay: 0.2s; }
-        .price-table tbody tr:nth-child(3) { animation-delay: 0.3s; }
-        .price-table tbody tr:nth-child(4) { animation-delay: 0.4s; }
-        .price-table tbody tr:nth-child(5) { animation-delay: 0.5s; }
-        .price-table tbody tr:nth-child(n+6) { animation-delay: 0.6s; }
+        .price-table tbody tr:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .price-table tbody tr:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .price-table tbody tr:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .price-table tbody tr:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .price-table tbody tr:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .price-table tbody tr:nth-child(n+6) {
+            animation-delay: 0.6s;
+        }
 
         /* Заголовки таблицы */
         .price-table th {
@@ -127,9 +166,17 @@
         }
 
         @keyframes pulseHighlight {
-            0% { background-color: #d4edda; }
-            50% { background-color: #b8e0c4; }
-            100% { background-color: #d4edda; }
+            0% {
+                background-color: #d4edda;
+            }
+
+            50% {
+                background-color: #b8e0c4;
+            }
+
+            100% {
+                background-color: #d4edda;
+            }
         }
 
         .best-price::after {
@@ -140,9 +187,17 @@
         }
 
         @keyframes pulseStar {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         /* Производитель */
@@ -163,7 +218,7 @@
             font-weight: 600;
             margin-bottom: 10px;
             color: #007bff;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
         }
 
         /* Панель инструментов с анимацией */
@@ -193,7 +248,7 @@
 
         .toolbar .btn:hover {
             transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
         .toolbar .btn:active {
@@ -202,54 +257,57 @@
 
         /* Адаптация для мобильных */
         @media (max-width: 768px) {
-            html, body {
+
+            html,
+            body {
                 font-size: 13px;
             }
-            
+
             .main-container {
                 padding: 10px;
                 padding-top: calc(var(--header-height) + 10px);
                 padding-bottom: calc(var(--footer-height) + 10px);
             }
-            
+
             .page-title {
                 font-size: 1.3rem;
             }
-            
+
             .price-table th,
             .price-table td {
                 padding: 6px 4px;
             }
-            
+
             .toolbar {
                 flex-direction: column;
                 align-items: stretch;
             }
-            
+
             .toolbar .form-control {
                 width: 100%;
             }
-            
+
             /* Упрощаем анимации на мобильных */
             .price-table tr:hover td {
                 background-color: inherit;
             }
-            
+
             .best-price {
                 animation: none;
             }
-            
+
             .best-price::after {
                 animation: none;
             }
         }
 
         @media (max-width: 576px) {
+
             .price-table th:first-child,
             .price-table td:first-child {
                 min-width: 100px;
             }
-            
+
             .page-title {
                 font-size: 1.2rem;
             }
@@ -304,7 +362,7 @@
                             {{ product.supplier_prices|get:supplier.name|get:"price"|default:"-" }}
                         </td>
                         <td class="manufacturer">
-                            {{ product.supplier_prices|get:supplier.name|get:"manufacturer"|default:"-"|truncatechars:10 }}
+                            {{ product.supplier_prices|get:supplier.name|get:"manufacturer"|default:"-"|truncatechars:10}}
                         </td>
                         {% endfor %}
                     </tr>
@@ -328,16 +386,16 @@
                 btn.style.transform = 'translateY(-2px) scale(1.02)';
                 btn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
             });
-            
+
             btn.addEventListener('mouseleave', () => {
                 btn.style.transform = '';
                 btn.style.boxShadow = '';
             });
-            
+
             btn.addEventListener('mousedown', () => {
                 btn.style.transform = 'translateY(0) scale(0.98)';
             });
-            
+
             btn.addEventListener('mouseup', () => {
                 btn.style.transform = 'translateY(-2px) scale(1.02)';
             });
@@ -368,4 +426,5 @@
         });
     </script>
 </body>
+
 </html>
