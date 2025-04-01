@@ -378,10 +378,10 @@
                     </div>
 
                     <div class="col-12 col-md-3">
-                        <button type="submit" formaction="{% url 'export_prices' %}"
-                            class="btn btn-success w-100 h-100">
+                        <a href="{% url 'export_prices' %}?date={{ selected_date|default:'' }}&time_from={{ time_from|default:'' }}&time_to={{ time_to|default:'' }}&supplier={{ selected_supplier_id|default:'' }}"
+                            class="btn btn-success w-100 h-100 d-flex align-items-center justify-content-center">
                             📤 Экспорт в Excel
-                        </button>
+                        </a>
                     </div>
                 </div>
             </form>

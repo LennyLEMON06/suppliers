@@ -1,13 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Product, Supplier, Price, SupplierToken
 from .forms import *
-from datetime import datetime, time
+import datetime
+from datetime import time
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 import pandas as pd
-from django.conf import settings
-from django.urls import reverse
 from django.utils.dateparse import parse_date
 import openpyxl
 from django.http import HttpResponse, HttpResponseForbidden
@@ -19,7 +18,6 @@ from decimal import Decimal, InvalidOperation
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils.timezone import make_aware
-from datetime import datetime, time
 import re
 
 # Функция для создания границ
