@@ -1,8 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Product, Supplier, Price, SupplierToken
 from .forms import *
-import datetime
-from datetime import time
+from datetime import datetime, time  # Правильный импорт
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -10,14 +9,12 @@ import pandas as pd
 from django.utils.dateparse import parse_date
 import openpyxl
 from django.http import HttpResponse, HttpResponseForbidden
-import datetime
-from django.utils import timezone
+from django.utils import timezone  # Для работы с часовыми поясами
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill, Alignment, Border, Side
 from decimal import Decimal, InvalidOperation
 from django.contrib import messages
 from django.http import JsonResponse
-from django.utils.timezone import make_aware
 import re
 
 # Функция для создания границ
@@ -34,7 +31,6 @@ def apply_styles(sheet):
     best_price_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
     border = get_border()
 
-    # Применяем стили ко всем ячейкам
     for row in sheet.iter_rows():
         for cell in row:
             cell.border = border
@@ -48,7 +44,6 @@ def export_to_excel(request):
     products = Product.objects.all()
     suppliers = Supplier.objects.all()
 
-    # Создание книги и активного листа
     workbook = openpyxl.Workbook()
     sheet = workbook.active
     sheet.title = "Таблица продуктов"
@@ -62,10 +57,9 @@ def export_to_excel(request):
         headers.extend([f"{supplier.name} (Цена)", f"{supplier.name} (Производитель)"])
     sheet.append(headers)
 
-    # Данные
     for product in products:
         row_data = [product.name, product.quantity, product.unit]
-        price_cells = {}  # Словарь {supplier_name: (cell, price)}
+        price_cells = {}
         best_price = None
 
         for supplier in suppliers:
@@ -78,21 +72,20 @@ def export_to_excel(request):
 
             if price and (best_price is None or price < best_price):
                 best_price = price
-                price_cells[supplier.name] = price  # Сохраняем цену для поставщика
+                price_cells[supplier.name] = price
 
         sheet.append(row_data)
 
-        # Выделяем ячейку с лучшей ценой
-        row_index = sheet.max_row  # Номер текущей строки
-        col_index = 4  # Первый столбец цены
+        row_index = sheet.max_row
+        col_index = 4
         for supplier in suppliers:
             if price_cells.get(supplier.name) == best_price:
-                sheet.cell(row=row_index, column=col_index).fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+                sheet.cell(row=row_index, column=col_index).fill = PatternFill(
+                    start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
             col_index += 2
 
     apply_styles(sheet)
 
-    # Автоматическая подгонка ширины колонок
     for col_num, column_cells in enumerate(sheet.columns, start=1):
         max_length = 0
         column = get_column_letter(col_num)
@@ -104,8 +97,7 @@ def export_to_excel(request):
                 pass
         sheet.column_dimensions[column].width = max_length + 2
 
-    # Формируем имя файла с датой
-    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    current_date = datetime.now().strftime("%Y-%m-%d")
     filename = f"products_{current_date}.xlsx"
 
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
@@ -385,18 +377,14 @@ def success(request):
     return render(request, 'supplier_form/success.html')
 
 
-
-
 def parse_time(time_str):
     """Парсит время из строки в формате HH:MM"""
     if not time_str:
         return None
     
-    # Проверяем стандартный формат
     if re.match(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$', time_str):
         return datetime.strptime(time_str, '%H:%M').time()
     
-    # Пробуем парсить другие форматы
     try:
         parts = time_str.split(':')
         hours = int(parts[0])
@@ -408,24 +396,30 @@ def parse_time(time_str):
 @login_required
 def price_list(request):
     date_str = request.GET.get('date')
-    time_from = request.GET.get('time_from')
-    time_to = request.GET.get('time_to')
+    time_from_str = request.GET.get('time_from')
+    time_to_str = request.GET.get('time_to')
     supplier_id = request.GET.get('supplier')
     
     prices = Price.objects.all()
     
     if date_str:
-        selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        time_from = parse_time(request.GET.get('time_from'))
-        time_to = parse_time(request.GET.get('time_to'))
-        
-        if time_from:
-            datetime_from = make_aware(datetime.combine(selected_date, time_from))
-            prices = prices.filter(date_added__gte=datetime_from)
-        
-        if time_to:
-            datetime_to = make_aware(datetime.combine(selected_date, time_to))
-            prices = prices.filter(date_added__lte=datetime_to)
+        try:
+            selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            time_from = parse_time(time_from_str)
+            time_to = parse_time(time_to_str)
+            
+            if time_from:
+                datetime_from = timezone.make_aware(datetime.combine(selected_date, time_from))
+                prices = prices.filter(date_added__gte=datetime_from)
+            
+            if time_to:
+                datetime_to = timezone.make_aware(datetime.combine(selected_date, time_to))
+                prices = prices.filter(date_added__lte=datetime_to)
+
+            if not time_from and not time_to:
+                prices = prices.filter(date_added__date=selected_date)
+        except ValueError:
+            pass
 
     if supplier_id:
         prices = prices.filter(supplier_id=supplier_id)
@@ -435,8 +429,8 @@ def price_list(request):
     return render(request, 'price_list.html', {
         'prices': prices.order_by('-date_added'),
         'selected_date': date_str,
-        'time_from': time_from,
-        'time_to': time_to,
+        'time_from': time_from_str,
+        'time_to': time_to_str,
         'suppliers': suppliers,
         'selected_supplier_id': supplier_id,
     })
@@ -446,26 +440,24 @@ def export_prices_to_excel(request):
     date_str = request.GET.get('date')
     supplier_id = request.GET.get('supplier')
 
-    # Фильтрация данных
     prices = Price.objects.all()
     if date_str:
-        selected_date = parse_date(date_str)
-        prices = prices.filter(date_added__date=selected_date)
+        try:
+            selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            prices = prices.filter(date_added__date=selected_date)
+        except ValueError:
+            pass
     if supplier_id:
         prices = prices.filter(supplier_id=supplier_id)
 
-    # Создание книги и активного листа
     workbook = openpyxl.Workbook()
     sheet = workbook.active
     sheet.title = "Цены"
-
-    # Устанавливаем альбомную ориентацию и подгоняем ширину
     sheet.page_setup.orientation = sheet.ORIENTATION_LANDSCAPE
     sheet.page_setup.fitToPage = True
     sheet.page_setup.fitToWidth = 1
     sheet.page_setup.fitToHeight = 0
 
-    # Границы для ячеек
     border = Border(
         left=Side(style='thin'),
         right=Side(style='thin'),
@@ -473,28 +465,24 @@ def export_prices_to_excel(request):
         bottom=Side(style='thin')
     )
 
-    # Заголовки
     headers = ["Продукт", "Поставщик", "Цена", "Производитель", "Дата добавления"]
     sheet.append(headers)
 
-    # Заполняем таблицу данными
     for price in prices:
         row = [
             price.product.name,
             price.supplier.name,
             price.price,
             price.manufacturer,
-            price.date_added.strftime("%Y-%m-%d")
+            timezone.localtime(price.date_added).strftime("%Y-%m-%d %H:%M")
         ]
         sheet.append(row)
 
-    # Применяем границы и выравнивание
     for row in sheet.iter_rows():
         for cell in row:
             cell.border = border
             cell.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
 
-    # Автоматическая подгонка ширины колонок
     for col_num, column_cells in enumerate(sheet.columns, start=1):
         max_length = 0
         column_letter = get_column_letter(col_num)
@@ -503,11 +491,9 @@ def export_prices_to_excel(request):
                 max_length = max(max_length, len(str(cell.value)))
         sheet.column_dimensions[column_letter].width = max_length + 2
 
-    # Формируем имя файла с датой
-    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    current_date = datetime.now().strftime("%Y-%m-%d")
     filename = f"prices_{current_date}.xlsx"
 
-    # Создание HTTP-ответа
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     workbook.save(response)

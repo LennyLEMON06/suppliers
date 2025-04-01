@@ -394,6 +394,7 @@
                         <th>Продукт</th>
                         <th>Поставщик</th>
                         <th>Цена</th>
+                        <th>Ед. изм.</th>
                         <th class="d-none d-sm-table-cell">Производитель</th>
                         <th class="d-none d-md-table-cell">Дата и время</th>
                     </tr>
@@ -404,6 +405,7 @@
                         <td>{{ price.product.name|truncatechars:20 }}</td>
                         <td>{{ price.supplier.name|truncatechars:20 }}</td>
                         <td>{{ price.price }}</td>
+                        <td>{{ price.product.unit }}</td>
                         <td class="d-none d-sm-table-cell">{{ price.manufacturer|truncatechars:20 }}</td>
                         <td class="d-none d-md-table-cell">{{ price.date_added|date:"d.m.Y H:i:s" }}</td>
                     </tr>
