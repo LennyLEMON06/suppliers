@@ -155,6 +155,8 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             background: white;
             animation: zoomIn 0.5s ease-out;
+            width: 100%;
+            overflow-x: auto;
         }
 
         @keyframes zoomIn {
@@ -280,6 +282,8 @@
         /* Адаптация для мобильных */
         @media (max-width: 768px) {
             .main-container {
+                white-space: nowrap;
+                /* Избегаем переноса слов */
                 padding: 10px;
                 padding-top: calc(var(--header-height) + 10px);
             }
@@ -298,6 +302,12 @@
                 padding: 8px 12px;
                 font-size: 14px;
             }
+
+            /* Убираем ограничение видимости столбцов */
+            .d-none.d-sm-table-cell,
+            .d-none.d-md-table-cell {
+                display: table-cell !important;
+            }
         }
 
         @media (max-width: 576px) {
@@ -310,6 +320,12 @@
             .page-title {
                 font-size: 1.2rem;
                 text-align: center;
+            }
+
+            .form-control,
+            .form-select {
+                padding: 8px 10px;
+                font-size: 14px;
             }
 
             .table th,
@@ -325,6 +341,13 @@
             /* Отключаем сложные анимации на мобильных */
             .table tr:hover {
                 transform: none;
+            }
+        }
+
+        /* Оптимизация для iOS */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                background-attachment: scroll;
             }
         }
     </style>
@@ -363,13 +386,11 @@
                         <select name="supplier" id="supplier" class="form-select">
                             <option value="">Все поставщики</option>
                             {% for supplier in suppliers %}
-                            <option value="{{ supplier.id }}" {% if supplier.id == selected_supplier_id %}selected{% endif %}>
-                                {{ supplier.name|truncatechars:20 }}
-                            </option>
+                            <option value="{{ supplier.id }}" {% if supplier.id == selected_supplier_id %}selected{% endif %}>                            </option>
                             {% endfor %}
                         </select>
                     </div>
-                    
+
                     <div class="col-12 col-md-3">
                         <button type="submit"
                             class="btn btn-primary w-100 h-100 d-flex align-items-center justify-content-center">
