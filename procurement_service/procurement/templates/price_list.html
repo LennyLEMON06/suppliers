@@ -8,6 +8,7 @@
     <title>Фильтр предложений</title>
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'font/bootstrap-icons.css' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'car.ico' %}">
     <style>
         :root {
             --header-height: 56px;
@@ -26,6 +27,8 @@
             background-attachment: fixed;
             font-size: 15px;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
         }
 
         .main-container {
@@ -386,7 +389,9 @@
                         <select name="supplier" id="supplier" class="form-select">
                             <option value="">Все поставщики</option>
                             {% for supplier in suppliers %}
-                            <option value="{{ supplier.id }}" {% if supplier.id == selected_supplier_id %}selected{% endif %}>                            </option>
+                            <option value="{{ supplier.id }}" {% if supplier.id == selected_supplier_id %}selected{% endif %}>
+                                {{ supplier.name }}                            
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
