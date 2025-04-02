@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-&_8c3lr_)jdri3lbz2jlm#axwt1(r*1l5ljfu#w6b14@_jf7&^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -80,8 +80,18 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-
+'''
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'cp63456_izakupki',
+        'USER': 'cp63456_izakupki',
+        'PASSWORD': 'Hello0602!',
+        'HOST': '127.0.0.1',
+        'PORT': 3306,
+    }
+}
+'''
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -122,7 +132,9 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
-
+ 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media/'
 
 SITE_URL = 'http://127.0.0.1:8000'  # production домен
     
