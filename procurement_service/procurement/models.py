@@ -17,6 +17,7 @@ class Product(models.Model):
         verbose_name = 'Продукт'
         verbose_name_plural = 'Продукты'
 
+
 class Supplier(models.Model):
     name = models.CharField(max_length=255, verbose_name=u"Наименование")
     contact_info = models.TextField(verbose_name=u"Контактная информация")
