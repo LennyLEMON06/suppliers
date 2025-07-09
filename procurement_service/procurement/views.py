@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Product, Supplier, Price, SupplierToken
+from .models import Product, Supplier, Price, SupplierToken, Category
 from .forms import *
 from datetime import datetime, time  # Правильный импорт
 from django.contrib.auth.forms import UserCreationForm
@@ -15,7 +15,9 @@ from openpyxl.styles import PatternFill, Alignment, Border, Side, Font
 from decimal import Decimal, InvalidOperation
 from django.contrib import messages
 from django.http import JsonResponse
+from django.db.models import Q
 import re
+from django.urls import reverse
 
 # Функция для создания границ
 def get_border():
@@ -143,13 +145,17 @@ def upload_excel(request):
     return render(request, 'excel/upload_excel.html', {'form': form})
 
 def user_login(request):
+    # ✅ Если пользователь уже авторизован — сразу редирект
+    if request.user.is_authenticated:
+        return redirect('product_supplier_table')
+
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('product_supplier_table')  # Перенаправление на главную страницу
+            return redirect('product_supplier_table')
         else:
             return render(request, 'login/login.html', {'error': 'Неверное имя пользователя или пароль'})
     return render(request, 'login/login.html')
@@ -214,9 +220,80 @@ def delete_product(request, product_id):
     return render(request, 'product/confirm_delete_product.html', {'product': product})
 
 @login_required
+def category_list(request):
+    categories = Category.objects.all()
+    return render(request, 'category/category_list.html', {'categories': categories})
+
+
+@login_required
+def add_category(request):
+    if request.method == 'POST':
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('category_list')  # Убедись, что такой маршрут есть
+    else:
+        form = CategoryForm()
+    return render(request, 'category/category_card.html', {'form': form})
+
+
+@login_required
+def edit_category(request, category_id):
+    category = get_object_or_404(Category, id=category_id)
+    if request.method == 'POST':
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            return redirect('category_list')
+    else:
+        form = CategoryForm(instance=category)
+    return render(request, 'category/category_card.html', {'form': form})
+
+
+@login_required
+def delete_category(request, category_id):
+    category = get_object_or_404(Category, id=category_id)
+    if request.method == 'POST':
+        category.delete()
+        return redirect('category_list')
+    return render(request, 'category/confirm_delete_category.html', {'category': category})
+
+def toggle_supplier_visibility(request, supplier_id):
+    if request.method == 'POST':
+        try:
+            supplier = Supplier.objects.get(id=supplier_id)
+            data = json.loads(request.body)
+            supplier.is_hidden = data.get('is_hidden', False)
+            supplier.save()
+            return JsonResponse({'status': 'ok'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+@login_required
 def supplier_list(request):
-    suppliers = Supplier.objects.all()  # Получаем всех поставщиков из базы данных
-    return render(request, 'supplier/supplier_list.html', {'suppliers': suppliers})
+    category_id = request.GET.get('category')  # получаем ID категории из запроса
+    categories = Category.objects.all()
+
+    show_hidden = request.GET.get('show_hidden', '0') == '1'
+
+    query = request.GET.get('q')
+    
+    suppliers = Supplier.objects.all().order_by('name')
+    if category_id:
+        suppliers = suppliers.filter(category_id=category_id)
+
+    if query:
+        suppliers = suppliers.filter(
+            Q(name__icontains=query) | Q(inn__icontains=query)
+        )
+
+    return render(request, 'supplier/supplier_list.html', {
+        'suppliers': suppliers,
+        'categories': categories,
+        'selected_category': int(category_id) if category_id else None,
+        'show_hidden': show_hidden,
+    })
 
 @login_required
 def add_supplier(request):
@@ -224,10 +301,10 @@ def add_supplier(request):
         # Если форма была отправлена, обрабатываем данные
         form = SupplierForm(request.POST)
         if form.is_valid():
-            form.save()  # Сохраняем поставщика в базу данных
-            return redirect('supplier_list')  # Перенаправляем на страницу со списком поставщиков
+            supplier = form.save()  # Сохраняем и получаем объект поставщика
+            category_id = supplier.category.id  # Получаем ID города (категории)
+            return redirect(f"{reverse('supplier_list')}?category={category_id}")  # Перенаправляем с фильтром
     else:
-        # Если это GET-запрос, показываем пустую форму
         form = SupplierForm()
     
     # Рендерим шаблон с формой
@@ -235,22 +312,29 @@ def add_supplier(request):
 
 @login_required
 def edit_supplier(request, supplier_id):
-    supplier = get_object_or_404(Supplier, id=supplier_id)  # Получаем поставщика по ID
+    supplier = get_object_or_404(Supplier, id=supplier_id) # Получаем поставщика по ID
+    previous_category_id = supplier.category.id if supplier.category else None  # Сохраняем старый город
+
     if request.method == 'POST':
-        form = SupplierForm(request.POST, instance=supplier)  # Заполняем форму данными поставщика
+        form = SupplierForm(request.POST, instance=supplier) # Заполняем форму данными поставщика
         if form.is_valid():
-            form.save()  # Сохраняем изменения
-            return redirect('supplier_list')  # Перенаправляем на список поставщиков
+            supplier = form.save()  # Обновляем поставщика
+            category_id = supplier.category.id if supplier.category else previous_category_id  # Берем новый город или старый
+            return redirect(f"{reverse('supplier_list')}?category={category_id}") # Перенаправляем на список поставщиков
     else:
-        form = SupplierForm(instance=supplier)  # Показываем форму с текущими данными поставщика
+        form = SupplierForm(instance=supplier)
+
     return render(request, 'supplier/supplier_card.html', {'form': form})
 
 @login_required
 def delete_supplier(request, supplier_id):
-    supplier = get_object_or_404(Supplier, id=supplier_id)  # Получаем поставщика по ID
+    supplier = get_object_or_404(Supplier, id=supplier_id) # Получаем поставщика по ID
+    category_id = supplier.category.id if supplier.category else None  # Сохраняем город перед удалением
+
     if request.method == 'POST':
-        supplier.delete()  # Удаляем поставщика
-        return redirect('supplier_list')  # Перенаправляем на список поставщиков
+        supplier.delete() # Удаляем поставщика
+        return redirect(f"{reverse('supplier_list')}?category={category_id}") # Перенаправляем на список поставщиков
+
     return render(request, 'supplier/confirm_delete_supplier.html', {'supplier': supplier})
 
 @login_required
@@ -261,7 +345,6 @@ def get_supplier_token(request, supplier_id):
     return JsonResponse({"url": url})
 
 
-@login_required
 def supplier_form(request, supplier_id, token):
     supplier = get_object_or_404(Supplier, id=supplier_id)
     token_obj = get_object_or_404(SupplierToken, supplier=supplier, token=token)
@@ -393,29 +476,69 @@ def parse_time(time_str):
     except (ValueError, IndexError):
         return None
 
+# @login_required
+# def price_list(request):
+#     date_str = request.GET.get('date')
+#     time_from_str = request.GET.get('time_from')
+#     time_to_str = request.GET.get('time_to')
+#     supplier_id = request.GET.get('supplier')
+    
+#     prices = Price.objects.all()
+    
+#     if date_str:
+#         try:
+#             selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+#             time_from = parse_time(time_from_str)
+#             time_to = parse_time(time_to_str)
+            
+#             if time_from:
+#                 datetime_from = timezone.make_aware(datetime.combine(selected_date, time_from))
+#                 prices = prices.filter(date_added__gte=datetime_from)
+            
+#             if time_to:
+#                 datetime_to = timezone.make_aware(datetime.combine(selected_date, time_to))
+#                 prices = prices.filter(date_added__lte=datetime_to)
+
+#             if not time_from and not time_to:
+#                 prices = prices.filter(date_added__date=selected_date)
+#         except ValueError:
+#             pass
+
+#     if supplier_id:
+#         prices = prices.filter(supplier_id=supplier_id)
+
+#     suppliers = Supplier.objects.all()
+
+#     return render(request, 'price_list.html', {
+#         'prices': prices.order_by('-date_added'),
+#         'selected_date': date_str,
+#         'time_from': time_from_str,
+#         'time_to': time_to_str,
+#         'suppliers': suppliers,
+#         'selected_supplier_id': supplier_id,
+#     })
+
 @login_required
 def price_list(request):
     date_str = request.GET.get('date')
     time_from_str = request.GET.get('time_from')
     time_to_str = request.GET.get('time_to')
     supplier_id = request.GET.get('supplier')
-    
-    prices = Price.objects.all()
-    
+    category_id = request.GET.get('category')  # Новое поле
+    prices = Price.objects.select_related('product', 'supplier').all()
+
     if date_str:
         try:
             selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
             time_from = parse_time(time_from_str)
             time_to = parse_time(time_to_str)
-            
+
             if time_from:
                 datetime_from = timezone.make_aware(datetime.combine(selected_date, time_from))
                 prices = prices.filter(date_added__gte=datetime_from)
-            
             if time_to:
                 datetime_to = timezone.make_aware(datetime.combine(selected_date, time_to))
                 prices = prices.filter(date_added__lte=datetime_to)
-
             if not time_from and not time_to:
                 prices = prices.filter(date_added__date=selected_date)
         except ValueError:
@@ -424,7 +547,12 @@ def price_list(request):
     if supplier_id:
         prices = prices.filter(supplier_id=supplier_id)
 
+    if category_id:
+        prices = prices.filter(supplier__category_id=category_id)
+
     suppliers = Supplier.objects.all()
+    categories = Category.objects.all()  # Получаем все категории
+    selected_category = category_id
 
     return render(request, 'price_list.html', {
         'prices': prices.order_by('-date_added'),
@@ -433,6 +561,8 @@ def price_list(request):
         'time_to': time_to_str,
         'suppliers': suppliers,
         'selected_supplier_id': supplier_id,
+        'categories': categories,
+        'selected_category': selected_category,
     })
 
 @login_required
@@ -536,49 +666,162 @@ def export_prices_to_excel(request):
     
     return response
 
+# В views.py
 @login_required
 def product_supplier_table(request):
     products = Product.objects.all()
     suppliers = Supplier.objects.all()
-    supplier_prices = Price.objects.all()
+    supplier_prices = Price.objects.select_related('supplier', 'product').all()
 
-    # Получаем дату из GET-запроса
+    # Фильтры
     date_str = request.GET.get('date')
-    if date_str:
-        selected_date = parse_date(date_str)  # Преобразуем строку в дату
-        supplier_prices = supplier_prices.filter(date_added__date=selected_date)  # Фильтруем по дате
+    supplier_id = request.GET.get('supplier')
+    category_id = request.GET.get('category')
 
-    # Создаем структуру данных для таблицы
+    if date_str:
+        selected_date = parse_date(date_str)
+        supplier_prices = supplier_prices.filter(date_added__date=selected_date)
+
+    if supplier_id:
+        suppliers = suppliers.filter(id=supplier_id)
+        supplier_prices = supplier_prices.filter(supplier_id=supplier_id)
+
+    if category_id:
+        suppliers = suppliers.filter(category_id=category_id)
+        supplier_prices = supplier_prices.filter(supplier__category_id=category_id)
+
+    # Исключаем поставщиков без данных
+    active_suppliers = supplier_prices.values_list('supplier_id', flat=True).distinct()
+    suppliers = suppliers.filter(id__in=active_suppliers)
+
     table_data = []
     for product in products:
-        product_data = {
+        product_info = {
+            'id': product.id,
             'name': product.name,
             'quantity': product.quantity,
             'unit': product.unit,
-            'supplier_prices': {},  # Словарь для хранения цен и производителей
+            'supplier_prices': {},
             'best_price': None,
-            'best_price_supplier': None,  # Поставщик с лучшей ценой
+            'best_supplier': None,
+            'categories': []  # Сюда добавим информацию по категориям
         }
 
-        # Собираем цены и производителей всех поставщиков для текущего продукта
         for supplier in suppliers:
-            price = supplier_prices.filter(product=product, supplier=supplier).order_by('-date_added').first()
-            product_data['supplier_prices'][supplier.name] = {
-                'price': price.price if price else None,
-                'manufacturer': price.manufacturer if price else None
-            }
+            price_entry = supplier_prices.filter(
+                product=product, 
+                supplier=supplier
+            ).order_by('-date_added').first()
+            
+            if price_entry:
+                product_info['supplier_prices'][supplier.name] = {
+                    'price': price_entry.price,
+                    'manufacturer': price_entry.manufacturer
+                }
 
-        # Находим лучшую цену и поставщика
-        prices = {supplier: data['price'] for supplier, data in product_data['supplier_prices'].items() if data['price'] is not None}
+        prices = {s: d['price'] for s, d in product_info['supplier_prices'].items() if d['price'] is not None}
         if prices:
-            best_supplier = min(prices, key=prices.get)
-            product_data['best_price'] = prices[best_supplier]
-            product_data['best_price_supplier'] = best_supplier
+            best_supplier_name = min(prices, key=prices.get)
+            product_info['best_price'] = prices[best_supplier_name]
+            product_info['best_supplier'] = best_supplier_name
 
-        table_data.append(product_data)
+        # Добавляем информацию по категориям и лучшим ценам (с учётом фильтров)
+        categories = Category.objects.all()
+        grouped = {}
+        for category in categories:
+            category_suppliers = suppliers.filter(category=category)
+            category_prices = supplier_prices.filter(supplier__in=category_suppliers, product=product)
+
+            if category_prices.exists():
+                # Берём последнюю цену от каждого поставщика
+                latest_prices = {}
+                for sp in category_prices:
+                    if sp.supplier.name not in latest_prices or sp.date_added > latest_prices[sp.supplier.name]['date']:
+                        latest_prices[sp.supplier.name] = {
+                            'price': sp.price,
+                            'date': sp.date_added,
+                            'supplier': sp.supplier,
+                            'manufacturer': sp.manufacturer
+                        }
+
+                valid_prices = [item for item in latest_prices.values() if item['price'] is not None]
+
+                if valid_prices:
+                    best = min(valid_prices, key=lambda x: x['price'])
+                    grouped[category.name] = {
+                        'category': category.name,
+                        'best_price': best['price'],
+                        'best_supplier': best['supplier'].name,
+                        'manufacturer': best['manufacturer']
+                }
+        product_info['categories'] = grouped
+        table_data.append(product_info)
+
+    categories = Category.objects.all()
 
     return render(request, 'product_supplier_table.html', {
         'table_data': table_data,
         'suppliers': suppliers,
-        'selected_date': date_str  # Передаем выбранную дату в шаблон
+        'categories': categories,
+        'selected_date': date_str,
+        'selected_supplier': supplier_id,
+        'selected_category': category_id,
+    })
+
+@login_required
+def best_prices_by_category(request):
+    products = Product.objects.all()
+    categories = Category.objects.all()
+    result = []
+
+    for product in products:
+        grouped = {}
+        for category in categories:
+            entries = Price.objects.filter(
+                product=product, supplier__category=category
+            ).select_related('supplier')
+
+            if entries.exists():
+                best = min(entries, key=lambda x: x.price)
+                grouped[category.name] = {
+                    'category': category,
+                    'best_price': best.price,
+                    'best_supplier': best.supplier,
+                    'manufacturer': best.manufacturer
+                }
+        result.append({'product': product, 'categories': grouped})
+
+    return render(request, 'best_prices_by_category.html', {'result': result})
+
+@login_required
+def price_history_view(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    prices = Price.objects.filter(product=product).select_related('supplier')
+
+    # Получаем параметры фильтрации
+    date_str = request.GET.get('date')
+    supplier_id = request.GET.get('supplier')
+    category_id = request.GET.get('category')
+
+    if date_str:
+        selected_date = parse_date(date_str)
+        prices = prices.filter(date_added__date=selected_date)
+
+    if supplier_id:
+        prices = prices.filter(supplier_id=supplier_id)
+
+    if category_id:
+        prices = prices.filter(supplier__category_id=category_id)
+
+    suppliers = Supplier.objects.all()
+    categories = Category.objects.all()
+
+    return render(request, 'price_history.html', {
+        'product': product,
+        'prices': prices.order_by('-date_added'),
+        'suppliers': suppliers,
+        'categories': categories,
+        'selected_date': date_str,
+        'selected_supplier': supplier_id,
+        'selected_category': category_id,
     })
