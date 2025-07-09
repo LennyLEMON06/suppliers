@@ -11,13 +11,18 @@ def mul(value, arg):
         return value  # Возвращает оригинальное значение, если ошибка
 
 @register.filter
-def get(dictionary, key):
-    return dictionary.get(key)
+def get(value, arg):
+    if isinstance(value, dict):
+        return value.get(arg)
+    return None  # защита от NoneType
 
 
 @register.filter(name='add_class')
 def add_class(field, css_class):
     return field.as_widget(attrs={"class": css_class})
+
+    from django import template
+
 
 
 
