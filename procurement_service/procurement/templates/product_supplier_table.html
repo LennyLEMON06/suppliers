@@ -1,0 +1,591 @@
+{% load custom_filters %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Таблица продуктов и поставщиков</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'font/bootstrap-icons.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="icon" type="image/x-icon" href="{% static 'car.ico' %}">
+    <style>
+        :root {
+            --header-height: 56px;
+            --footer-height: 40px;
+            --animation-duration: 0.3s;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #dbeafe, #93c5fd);
+            background-attachment: fixed;
+            overflow-x: hidden;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Основной контейнер с анимацией появления */
+        .main-container {
+            padding: 15px;
+            padding-top: calc(var(--header-height) + 15px);
+            padding-bottom: calc(var(--footer-height) + 15px);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Контейнер таблицы с анимацией */
+        .table-responsive-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Таблица */
+        .price-table {
+            width: 100%;
+            min-width: 600px;
+            border-collapse: collapse;
+        }
+
+        /* Анимация строк таблицы */
+        @keyframes fadeInRow {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .price-table tbody tr {
+            animation: fadeInRow 0.4s ease-out forwards;
+        }
+
+        /* Задержка анимации для каждой строки */
+        .price-table tbody tr:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .price-table tbody tr:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .price-table tbody tr:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .price-table tbody tr:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .price-table tbody tr:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .price-table tbody tr:nth-child(n+6) {
+            animation-delay: 0.6s;
+        }
+
+        /* Заголовки таблицы */
+        .price-table th {
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            padding: 10px 8px;
+            text-align: center;
+            vertical-align: middle;
+            border: 1px solid #dee2e6;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        /* Ячейки таблицы с эффектом при наведении */
+        .price-table td {
+            padding: 8px;
+            text-align: center;
+            vertical-align: middle;
+            border: 1px solid #dee2e6;
+            transition: background-color 0.2s ease;
+        }
+
+        .price-table tr:hover td {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+
+        /* Фиксированный первый столбец */
+        .price-table th:first-child,
+        .price-table td:first-child {
+            position: sticky;
+            left: 0;
+            background-color: #f8f9fa;
+            z-index: 5;
+            min-width: 120px;
+        }
+
+        /* Лучшая цена с анимацией */
+        .best-price {
+            background-color: #d4edda !important;
+            font-weight: bold;
+            position: relative;
+            animation: pulseHighlight 2s infinite;
+        }
+
+        @keyframes pulseHighlight {
+            0% {
+                background-color: #d4edda;
+            }
+
+            50% {
+                background-color: #b8e0c4;
+            }
+
+            100% {
+                background-color: #d4edda;
+            }
+        }
+
+        .best-price::after {
+            content: "★";
+            color: #ffc107;
+            margin-left: 3px;
+            animation: pulseStar 1.5s infinite;
+        }
+
+        @keyframes pulseStar {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Производитель */
+        .manufacturer {
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+
+        /* Шапка с анимацией */
+        .page-header {
+            margin-bottom: 15px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #007bff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Панель инструментов с анимацией */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+            align-items: center;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .toolbar .form-control {
+            min-width: 150px;
+            transition: all 0.3s ease;
+        }
+
+        .toolbar .form-control:focus {
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .toolbar .btn {
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            transform: translateZ(0);
+        }
+
+        .toolbar .btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .toolbar .btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        /* Адаптация для мобильных */
+        @media (max-width: 768px) {
+
+            html,
+            body {
+                font-size: 13px;
+            }
+
+            .main-container {
+                padding: 10px;
+                padding-top: calc(var(--header-height) + 10px);
+                padding-bottom: calc(var(--footer-height) + 10px);
+            }
+
+            .page-title {
+                font-size: 1.3rem;
+            }
+
+            .price-table th,
+            .price-table td {
+                padding: 6px 4px;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .toolbar .form-control {
+                width: 100%;
+            }
+
+            /* Упрощаем анимации на мобильных */
+            .price-table tr:hover td {
+                background-color: inherit;
+            }
+
+            .best-price {
+                animation: none;
+            }
+
+            .best-price::after {
+                animation: none;
+            }
+        }
+
+        @media (max-width: 576px) {
+
+            .price-table th:first-child,
+            .price-table td:first-child {
+                min-width: 100px;
+            }
+
+            .page-title {
+                font-size: 1.2rem;
+            }
+        }
+        .card{
+            max-width: 385px;
+        }
+        
+        /* Адаптация для мобильных устройств */
+        @media (max-width: 768px) {
+            .category-details-card {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .category-details-card h5 {
+                font-size: 16px;
+            }
+
+            .category-details-card ul {
+                padding-left: 15px;
+                font-size: 14px;
+            }
+
+            .category-details-card li {
+                margin-bottom: 10px;
+            }
+
+            /* Компактное отображение таблицы */
+            .price-table th,
+            .price-table td {
+                padding: 6px 4px;
+                font-size: 13px;
+            }
+
+            .table-responsive-container {
+                border-radius: 6px;
+            }
+        }
+
+        /* Для очень маленьких экранов (например, телефоны) */
+        @media (max-width: 576px) {
+            .main-container {
+                padding: 10px;
+            }
+
+            .page-title {
+                font-size: 1.2rem;
+                text-align: center;
+            }
+
+            .toolbar .form-control,
+            .toolbar .form-select {
+                width: 100%;
+                font-size: 14px;
+                padding: 8px;
+            }
+
+            .toolbar .btn {
+                width: 100%;
+                font-size: 14px;
+                padding: 8px;
+            }
+
+            .category-details-card {
+                font-size: 13px;
+            }
+
+            .category-details-card h5 {
+                font-size: 15px;
+            }
+
+            .category-details-card li strong {
+                display: block;
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'header.html' %}
+
+    <div class="main-container">
+        <div class="page-header">
+            <h1 class="page-title">Таблица продуктов и поставщиков</h1>
+        </div>
+        <div class="toolbar">
+            <form method="GET" class="d-flex flex-wrap gap-2 align-items-end flex-grow-1">
+                <div style="min-width: 200px; flex: 1 1 20%;">
+                    <label for="date" class="form-label">Дата:</label>
+                    <input type="date" name="date" id="date" class="form-control" value="{{ selected_date }}">
+                </div>
+
+                <div style="min-width: 200px; flex: 1 1 20%;">
+                    <label for="supplier" class="form-label">Поставщик:</label>
+                    <select name="supplier" id="supplier" class="form-select">
+                        <option value="">Все поставщики</option>
+                        {% for supplier in suppliers %}
+                        <option value="{{ supplier.id }}" {% if supplier.id|stringformat:"s" == selected_supplier|default:'' %}selected{% endif %}>
+                            {{ supplier.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="min-width: 200px; flex: 1 1 20%;">
+                    <label for="category" class="form-label">Город:</label>
+                    <select name="category" id="category" class="form-select">
+                        <option value="">Все города</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if category.id|stringformat:"s" == selected_category|default:'' %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="flex: 1 1 10%;">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel"></i> Применить
+                    </button>
+                </div>
+            </form>
+
+            <!-- Кнопки справа -->
+            <div class="d-flex gap-2 align-self-end">
+                <a href="{% url 'price_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-filter"></i> Фильтр предложений
+                </a>
+                <a href="{% url 'export_to_excel' %}" class="btn btn-success flex-shrink">
+                    📤 Экспорт в Excel
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive-container">
+            <table class="price-table">
+                <thead>
+                    <tr>
+                        <th>Товар</th>
+                        <th>Кол-во</th>
+                        <th>Ед.</th>
+                        {% for supplier in suppliers %}
+                        <th>{{ supplier.name|truncatechars:15 }}</th>
+                        <th>Произв.</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                {% comment %} <tbody>
+                    {% for product in table_data %}
+                    <tr>
+                        <td>{{ product.name|truncatechars:20 }}</td>
+                        <td>{{ product.quantity }}</td>
+                        <td>{{ product.unit }}</td>
+                        {% for supplier in suppliers %}
+                        <td class="{% if supplier.name == product.best_price_supplier %}best-price{% endif %}">
+                            {{ product.supplier_prices|get:supplier.name|get:"price"|default:"-" }}
+                        </td>
+                        <td class="manufacturer">
+                            {{ product.supplier_prices|get:supplier.name|get:"manufacturer"|default:"-"|truncatechars:10}}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{{ suppliers|length|mul:2|add:3 }}">Нет данных за выбранную дату</td>
+                    </tr>
+                    {% endfor %}
+                </tbody> {% endcomment %}
+                <tbody>
+                    {% for product in table_data %}
+                    <tr class="clickable-row" data-product-id="{{ product.id }}">
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.quantity }}</td>
+                        <td>{{ product.unit }}</td>
+                        {% for supplier in suppliers %}
+                        <td class="{% if supplier.name == product.best_supplier %}best-price{% endif %}">
+                            {{ product.supplier_prices|get:supplier.name|get:"price"|default:"-" }}
+                        </td>
+                        <td>{{ product.supplier_prices|get:supplier.name|get:"manufacturer"|default:"-" }}</td>
+                        {% endfor %}
+                    </tr>
+
+                    <!-- Блок информации будет вставлен здесь -->
+                    <tr class="product-details" id="details-{{ product.id }}" style="display: none;">
+                        <td colspan="{{ suppliers|length|add:3 }}">
+                        <div class="card mt-2">
+                            <div class="category-details-card">
+                            <h5>Детали по категориям:</h5>
+                            <ul class="list-unstyled">
+                                {% for cat_name, data in product.categories.items %}
+                                <li>
+                                    <strong>{{ cat_name }}</strong>: 
+                                    Поставщик — {{ data.best_supplier }},
+                                    <span class="best-price">Цена — {{ data.best_price }} руб.</span>,
+                                    Производитель — {{ data.manufacturer|default:"—" }}
+                                </li>
+                                {% empty %}
+                                <li>Нет данных</li>
+                                {% endfor %}
+                            </ul>
+                            </div>
+                        </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="{{ suppliers|length|mul:2|add:3 }}">Нет данных за выбранную дату</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+        document.querySelectorAll('.clickable-row').forEach(row => {
+            row.addEventListener('click', function () {
+                const productId = this.dataset.productId;
+                const detailsRow = document.getElementById(`details-${productId}`);
+
+                // Переключаем видимость
+                detailsRow.style.display = detailsRow.style.display === 'none' ? '' : 'none';
+            });
+        });
+    </script>
+    <script>
+        // Анимация при наведении на кнопки
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                btn.style.transform = 'translateY(-2px) scale(1.02)';
+                btn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+            });
+
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = '';
+                btn.style.boxShadow = '';
+            });
+
+            btn.addEventListener('mousedown', () => {
+                btn.style.transform = 'translateY(0) scale(0.98)';
+            });
+
+            btn.addEventListener('mouseup', () => {
+                btn.style.transform = 'translateY(-2px) scale(1.02)';
+            });
+        });
+
+        // Плавная прокрутка при загрузке
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            }, 100);
+        });
+
+        // Анимация при клике на строку таблицы
+        document.querySelectorAll('.price-table tbody tr').forEach(row => {
+            row.style.cursor = 'pointer';
+            row.addEventListener('click', (e) => {
+                // Игнорируем клики по кнопкам
+                if (!e.target.closest('a') && !e.target.closest('button')) {
+                    row.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
+                    setTimeout(() => {
+                        row.style.backgroundColor = '';
+                    }, 300);
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

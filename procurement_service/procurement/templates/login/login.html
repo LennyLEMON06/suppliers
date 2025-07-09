@@ -1,0 +1,320 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'font/bootstrap-icons.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="icon" type="image/x-icon" href="{% static 'car.ico' %}">
+    <style>
+        :root {
+            --animation-duration: 0.4s;
+        }
+        
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #dbeafe, #93c5fd);
+            background-attachment: fixed;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            animation: fadeIn var(--animation-duration) ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .login-container {
+            background: #fff;
+            color: #333;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            transform: translateY(0);
+            transition: all 0.3s ease;
+            animation: slideUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.25);
+        }
+
+        h2 {
+            animation: fadeInDown 0.5s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from { 
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-control {
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            animation: fadeIn var(--animation-duration) ease-out;
+            animation-fill-mode: both;
+        }
+
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+            transform: scale(1.02);
+        }
+
+        .btn-primary {
+            background: #0d6efd;
+            border: none;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            animation: fadeInUp 0.5s ease-out;
+            animation-delay: 0.1s;
+            animation-fill-mode: both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .btn-primary:hover {
+            background: #0b5ed7;
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 5px 15px rgba(11, 94, 215, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%, -50%);
+            transform-origin: 50% 50%;
+        }
+
+        .btn-primary:focus:not(:active)::after {
+            animation: ripple 0.6s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+
+        .alert {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            transform: translate3d(0, 0, 0);
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* Стили для поля с паролем */
+        .password-wrapper {
+            position: relative;
+            animation: fadeIn var(--animation-duration) ease-out;
+            animation-delay: 0.2s;
+            animation-fill-mode: both;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .password-toggle:hover {
+            color: #0d6efd;
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .password-toggle:focus {
+            outline: none;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 15px;
+            animation: fadeIn var(--animation-duration) ease-out;
+            animation-delay: 0.3s;
+            animation-fill-mode: both;
+        }
+
+        .register-link a {
+            color: #0d6efd;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .register-link a:hover {
+            text-decoration: none;
+            color: #0b5ed7;
+        }
+
+        .register-link a::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: #0d6efd;
+            transform: scaleX(0);
+            transform-origin: bottom right;
+            transition: transform 0.3s ease;
+        }
+
+        .register-link a:hover::after {
+            transform: scaleX(1);
+            transform-origin: bottom left;
+        }
+    </style>
+</head>
+
+<body class="d-flex justify-content-center align-items-center">
+
+    <div class="login-container">
+        <h2 class="text-center fw-bold mb-4">Вход</h2>
+
+        {% if error %}
+        <div class="alert alert-danger text-center mb-4">{{ error }}</div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="mb-4">
+                <label for="username" class="form-label fw-semibold">Имя пользователя</label>
+                <input type="text" name="username" id="username" class="form-control py-2" required>
+            </div>
+
+            <div class="mb-4">
+                <label for="password" class="form-label fw-semibold">Пароль</label>
+                <div class="password-wrapper">
+                    <input type="password" name="password" id="password" class="form-control py-2" required>
+                    <button type="button" class="password-toggle" id="togglePassword" aria-label="Показать пароль">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2 mt-3">
+                <span class="submit-text">Войти</span>
+            </button>
+        </form>
+
+        <!-- <p class="register-link mt-4">
+            Нет аккаунта? <a href="{% url 'register' %}">Зарегистрироваться</a>
+        </p> -->
+    </div>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Переключение видимости пароля
+            const togglePassword = document.querySelector('#togglePassword');
+            const password = document.querySelector('#password');
+            
+            togglePassword.addEventListener('click', function() {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                
+                const icon = this.querySelector('i');
+                icon.classList.toggle('bi-eye');
+                icon.classList.toggle('bi-eye-slash');
+                
+                // Анимация иконки
+                icon.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    icon.style.transform = 'scale(1)';
+                }, 200);
+            });
+
+            // Анимация при отправке формы
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        const submitText = submitBtn.querySelector('.submit-text');
+                        if (submitText) {
+                            submitText.textContent = 'Вход...';
+                        }
+                        submitBtn.innerHTML = `
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span class="ms-2">Вход...</span>
+                        `;
+                        submitBtn.disabled = true;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

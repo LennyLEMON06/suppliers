@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap');
+        
+        :root {
+            --neon-blue: #00f7ff;
+            --neon-pink: #ff3399;
+            --neon-green: #00ff88;
+            --deep-space: #0a051e;
+            --star-light: rgba(255,255,255,0.8);
+            --space-dust: rgba(200, 200, 255, 0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background-color: #000;
+            color: #e0e0ff;
+            font-family: 'Share Tech Mono', monospace;
+            padding: 15px;
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            /* Звёздный фон с разными слоями */
+            background-image: 
+                /* Мелкие звёзды */
+                radial-gradient(circle at 10% 20%, var(--star-light) 0.3px, transparent 0.3px),
+                radial-gradient(circle at 30% 50%, var(--star-light) 0.3px, transparent 0.3px),
+                radial-gradient(circle at 70% 80%, var(--star-light) 0.3px, transparent 0.3px),
+                radial-gradient(circle at 90% 10%, var(--star-light) 0.3px, transparent 0.3px),
+                radial-gradient(circle at 20% 70%, var(--star-light) 0.3px, transparent 0.3px),
+                /* Средние звёзды */
+                radial-gradient(circle at 40% 30%, var(--star-light) 0.6px, transparent 0.6px),
+                radial-gradient(circle at 60% 60%, var(--star-light) 0.6px, transparent 0.6px),
+                radial-gradient(circle at 80% 40%, var(--star-light) 0.6px, transparent 0.6px),
+                /* Крупные звёзды */
+                radial-gradient(circle at 25% 25%, var(--star-light) 1px, transparent 1px),
+                radial-gradient(circle at 75% 75%, var(--star-light) 1px, transparent 1px),
+                radial-gradient(circle at 50% 50%, var(--star-light) 1px, transparent 1px);
+            background-size: 
+                200px 200px, 300px 300px, 250px 250px, 350px 350px, 400px 400px,
+                500px 500px, 600px 600px, 700px 700px,
+                800px 800px, 900px 900px, 1000px 1000px;
+            animation: stars 120s linear infinite;
+        }
+        
+        @keyframes stars {
+            0% { background-position: 0 0, 50px 50px, 100px 100px, 150px 150px, 200px 200px, 250px 250px, 300px 300px, 350px 350px, 400px 400px, 450px 450px, 500px 500px; }
+            100% { background-position: 200px 2000px, 300px 1500px, 250px 1800px, 350px 2200px, 400px 2500px, 500px 3000px, 600px 2800px, 700px 3200px, 800px 3500px, 900px 4000px, 1000px 3800px; }
+        }
+        
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                font-size: 14px;
+                background-size: 
+                    150px 150px, 200px 200px, 180px 180px, 250px 250px, 300px 300px,
+                    400px 400px, 500px 500px, 600px 600px,
+                    700px 700px, 800px 800px, 900px 900px;
+            }
+            
+            .header {
+                font-size: 20px !important;
+                padding: 10px !important;
+                margin-bottom: 20px !important;
+            }
+            
+            .content {
+                padding: 15px !important;
+                margin: 20px 0 !important;
+            }
+            
+            .binary-code {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                font-size: 16px !important;
+                letter-spacing: 1px !important;
+            }
+            
+            .header div {
+                font-size: 10px !important;
+            }
+            
+            .content {
+                padding: 12px !important;
+            }
+        }
+        
+        /* Космические элементы */
+        .space-particle {
+            position: fixed;
+            background-color: var(--star-light);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            animation: float infinite linear;
+        }
+        
+        /* Космическая пыль */
+        .space-dust {
+            position: fixed;
+            background: var(--space-dust);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            filter: blur(1px);
+            animation: dust-float infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translate(var(--tx, 100px), var(--ty, 100vh)) rotate(360deg); opacity: 0; }
+        }
+        
+        @keyframes dust-float {
+            0% { transform: translate(0, 0); opacity: 0; }
+            20% { opacity: 0.3; }
+            80% { opacity: 0.3; }
+            100% { transform: translate(var(--dtx, 50px), var(--dty, 50vh)); opacity: 0; }
+        }
+        
+        .galaxy-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 30%, rgba(0, 247, 255, 0.05) 0%, transparent 70%),
+                radial-gradient(ellipse at 80% 60%, rgba(255, 51, 153, 0.03) 0%, transparent 70%),
+                radial-gradient(ellipse at 50% 80%, rgba(0, 255, 136, 0.02) 0%, transparent 70%);
+            z-index: -2;
+            pointer-events: none;
+        }
+        
+        /* Туманности */
+        .nebula {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(30px);
+            opacity: 0.1;
+            z-index: -1;
+            animation: nebula-pulse 20s infinite alternate;
+        }
+        
+        @keyframes nebula-pulse {
+            0% { opacity: 0.05; transform: scale(1); }
+            50% { opacity: 0.15; transform: scale(1.1); }
+            100% { opacity: 0.05; transform: scale(1); }
+        }
+        
+        .header {
+            text-align: center;
+            color: var(--neon-blue);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px var(--neon-blue), 0 0 20px rgba(0, 247, 255, 0.5);
+            letter-spacing: 3px;
+            position: relative;
+            padding: 20px;
+            background: rgba(10, 5, 30, 0.3);
+            border: 1px solid rgba(0, 247, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 247, 255, 0.1);
+            animation: glitch 5s infinite alternate, border-pulse 3s infinite;
+        }
+        
+        @keyframes glitch {
+            0%, 100% { 
+                text-shadow: 0 0 10px var(--neon-blue), 0 0 20px rgba(0, 247, 255, 0.5); 
+                transform: translate(0);
+            }
+            20% { 
+                text-shadow: -2px -2px 5px #ff00f7, 2px 2px 10px rgba(0, 247, 255, 0.5); 
+                transform: translate(-2px, -1px);
+            }
+            40% { 
+                text-shadow: 3px 3px 8px #f7ff00, -3px -3px 12px rgba(0, 247, 255, 0.5); 
+                transform: translate(1px, 2px);
+            }
+            60% { 
+                text-shadow: -3px 3px 7px #00ff47, 3px -3px 14px rgba(0, 247, 255, 0.5); 
+                transform: translate(2px, -1px);
+            }
+            80% { 
+                text-shadow: 2px -2px 6px #ff5500, -2px 2px 16px rgba(0, 247, 255, 0.5); 
+                transform: translate(-1px, 1px);
+            }
+        }
+        
+        @keyframes border-pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 247, 255, 0.1); }
+            50% { box-shadow: 0 0 30px rgba(0, 247, 255, 0.3); }
+        }
+        
+        .content {
+            background-color: rgba(10, 5, 30, 0.7);
+            border-left: 3px solid var(--neon-blue);
+            padding: 25px;
+            margin: 30px 0;
+            position: relative;
+            box-shadow: 0 0 15px rgba(0, 247, 255, 0.3);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .content:hover {
+            box-shadow: 0 0 25px rgba(0, 247, 255, 0.6);
+            transform: translateY(-3px) scale(1.005);
+            background-color: rgba(10, 5, 30, 0.8);
+        }
+        
+        .content::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+            animation: scanline 8s linear infinite;
+            filter: drop-shadow(0 0 5px var(--neon-blue));
+        }
+        
+        @keyframes scanline {
+            0% { top: 0%; opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { top: 100%; opacity: 0.3; }
+        }
+        
+        strong {
+            color: var(--neon-pink);
+            text-shadow: 0 0 5px rgba(255, 51, 153, 0.5);
+            font-weight: 700;
+        }
+        
+        .signature {
+            margin-top: 40px;
+            font-style: italic;
+            color: #aaa;
+            text-align: right;
+            position: relative;
+            padding: 15px 0;
+        }
+        
+        .signature::after {
+            content: "";
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-pink), transparent);
+            position: absolute;
+            right: 0;
+            top: 0;
+            filter: drop-shadow(0 0 3px var(--neon-pink));
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.7; text-shadow: 0 0 5px #ff0000; }
+            100% { opacity: 1; text-shadow: 0 0 15px #ff0000, 0 0 25px #ff5555; }
+        }
+        
+        .alien-text {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-green);
+            text-shadow: 0 0 5px var(--neon-green);
+            font-weight: 500;
+        }
+        
+        .corner-decoration {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 1px solid var(--neon-blue);
+            opacity: 0.7;
+            filter: drop-shadow(0 0 3px var(--neon-blue));
+        }
+        
+        .top-left { top: 5px; left: 5px; border-right: none; border-bottom: none; }
+        .top-right { top: 5px; right: 5px; border-left: none; border-bottom: none; }
+        .bottom-left { bottom: 5px; left: 5px; border-right: none; border-top: none; }
+        .bottom-right { bottom: 5px; right: 5px; border-left: none; border-top: none; }
+        
+        .binary-code {
+            position: absolute;
+            color: rgba(0, 247, 255, 0.1);
+            font-size: 10px;
+            user-select: none;
+            z-index: -1;
+            animation: float 20s linear infinite;
+            font-family: 'Share Tech Mono', monospace;
+            pointer-events: none;
+        }
+        
+        .countdown {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 85, 85, 0.2);
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-family: 'Orbitron', sans-serif;
+            color: #ff5555;
+            text-shadow: 0 0 5px rgba(255, 85, 85, 0.5);
+            animation: pulse 1.5s infinite alternate;
+            border: 1px solid rgba(255, 85, 85, 0.3);
+            box-shadow: 0 0 15px rgba(255, 85, 85, 0.2);
+        }
+        
+        .black-hole {
+            position: fixed;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, #000 0%, #330033 70%, transparent 90%);
+            filter: blur(2px);
+            opacity: 0;
+            transition: opacity 1s, transform 5s;
+            z-index: -1;
+        }
+        
+        .comet {
+            position: fixed;
+            width: 3px;
+            height: 3px;
+            background: white;
+            border-radius: 50%;
+            filter: blur(1px);
+            box-shadow: 0 0 10px 2px var(--neon-blue);
+            opacity: 0;
+            z-index: -1;
+            animation: comet-fly linear;
+        }
+        
+        @keyframes comet-fly {
+            0% { transform: translate(-100px, -100px); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translate(100vw, 100vh); opacity: 0; }
+        }
+        
+        /* Эффект уничтожения документа */
+        .document-destruction {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 0%, black 100%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1000;
+            transition: opacity 3s;
+        }
+        
+        .burn-effect {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(255,100,0,0.8) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(10px);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 1001;
+        }
+        
+        .burn-hole {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: black;
+            border-radius: 50%;
+            border: 2px solid rgba(255,50,0,0.8);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 1002;
+        }
+    </style>
+</head>
+<body>
+    <!-- Космические элементы -->
+    <div class="galaxy-overlay"></div>
+    
+    <!-- Эффект уничтожения документа -->
+    <div class="document-destruction" id="documentDestruction"></div>
+    
+    <!-- Бинарный код -->
+    <div class="binary-code" style="top: 10%; left: 5%;">01001000 01000101 01001100 01010000</div>
+    <div class="binary-code" style="top: 30%; right: 10%;">01001101 01000101 01001101 01001111 01010010 01011001</div>
+    <div class="binary-code" style="bottom: 20%; left: 15%;">01000100 01000001 01001110 01000111 01000101 01010010</div>
+    
+    <!-- Черная дыра -->
+    <div class="black-hole" id="blackHole"></div>
+    
+    <!-- Таймер -->
+    <div class="countdown" id="countdown">⏳ ВРЕМЯ ДО КАТАСТРОФЫ: 04:00:00</div>
+    
+    <!-- Заголовок -->
+    <div class="header">
+        <div style="font-size: 12px; letter-spacing: 5px; margin-bottom: 10px;">⋆⋅⋅⋆⋅⋅⋆⋅⋅⋆⋅⋅⋆⋅⋅⋆⋅⋅⋆⋅⋅⋆</div>
+        ⚠ ЭКСТРЕННЫЙ ПРОТОКОЛ МЛЕЧНОГО ПУТИ ⚠<br>
+        <span style="font-size: 18px;">:: ДЕЛО №2025-RO-MA-NCE ::</span>
+        <div style="font-size: 12px; letter-spacing: 5px; margin-top: 10px;">⋆⋅⋅⋆⋅⋅⋆⋅⋅⋆⋅⋅⋆⋅⋅⋆⋅⋅⋆⋅⋅⋆</div>
+    </div>
+
+    <!-- Контент -->
+    <div class="content">
+        <div class="corner-decoration top-left"></div>
+        <div class="corner-decoration top-right"></div>
+        <div class="corner-decoration bottom-left"></div>
+        <div class="corner-decoration bottom-right"></div>
+        
+        <strong>ОБЪЕКТ:</strong> <span class="alien-text">ТЕССЕРАКТ ЛЮБВИ</span><br>
+        <strong>СТАТУС:</strong> ПРОПАЛ ПРИ ЗАГАДОЧНЫХ ОБСТОЯТЕЛЬСТВАХ В СЕКТОРЕ «КУРСК»<br>
+        <strong>ПОСЛЕДНИЕ СЛОВА ЖИТЕЛЕЙ БАЛКА:</strong> <span style="color: var(--neon-pink); font-style: italic;">«. ... .-.. .. / --- -. / -.. . .--- ... - .-- .. - . .-.. -..- -. --- / .-.. ..-- -... .. - / . . .-.-.- .-.-.- .-.-.- / .--. ..- ... - -..- / -.. --- -.- .- ...- . - / ..-.. - --- / .--. --- / --.. .- -.- --- -. .- -- / .-- ... . .-.. . -. -. --- .---»</span>
+    </div>
+
+    <div class="content">
+        <div class="corner-decoration top-left"></div>
+        <div class="corner-decoration top-right"></div>
+        <div class="corner-decoration bottom-left"></div>
+        <div class="corner-decoration bottom-right"></div>
+        
+        <span class="alien-text">АГЕНТ ЕВГЕНИЙ</span>, ВАМ ПОРУЧЕНО РАССЛЕДОВАНИЕ.<br><br>
+        ИСПОЛЬЗУЙТЕ УЛИКИ (<span style="color: var(--neon-green);">ВАШИ ОБЩИЕ МЕСТА С КАПИТАНОМ КСЕНИЯ</span>)<br>
+        КВАНТОВЫЕ ПОДСКАЗКИ (<span style="color: var(--neon-green);">ЗАГАДКИ</span>)<br><br>
+        <strong class="pulse">⚠ ВНИМАНИЕ:</strong> ЕСЛИ НЕ НАЙДЁТЕ ЕГО ЗА <span style="color: #ff5555; font-weight: bold;">4 ЧАСА</span>, ВСЕМУ ПРИДЁТ <span style="color: #ff5555; font-weight: bold;">КОНЕЦ</span>.
+    </div>
+
+    <div class="signature">
+        ПОДПИСЬ: <span class="alien-text">ТАЙНЫЙ СОВЕТ ГАЛАКТИКИ ЛЮБВИ</span><br>
+        <span style="font-size: 10px;">ДОКУМЕНТ УНИЧТОЖИТСЯ ЧЕРЕЗ 5...4...3...</span>
+    </div>
+
+    <iframe frameborder="0" allow="clipboard-write" style="border:none;width:340px;height:195px;" width="340" height="195" src="https://music.yandex.ru/iframe/album/26847710/track/116133357">Слушайте <a href="https://music.yandex.ru/album/26847710/track/116133357">Интерстеллар</a> — <a href="https://music.yandex.ru/artist/16682054">Imperial Orchestra</a> на Яндекс Музыке</iframe>
+
+    <script>
+        // Создаем космические частицы
+        function createSpaceParticles() {
+            const particleCount = window.innerWidth < 768 ? 50 : 100;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('space-particle');
+                
+                const size = Math.random() * 3 + 1;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                particle.style.left = `${Math.random() * 100}vw`;
+                particle.style.top = `${Math.random() * 100}vh`;
+                
+                // Разные скорости и направления
+                const tx = (Math.random() - 0.5) * 200;
+                const ty = Math.random() * 100 + 50;
+                particle.style.setProperty('--tx', `${tx}px`);
+                particle.style.setProperty('--ty', `${ty}px`);
+                
+                particle.style.animationDuration = `${Math.random() * 20 + 10}s`;
+                particle.style.animationDelay = `${Math.random() * 5}s`;
+                
+                // Случайная яркость
+                particle.style.opacity = Math.random() * 0.8 + 0.2;
+                
+                document.body.appendChild(particle);
+            }
+        }
+        
+        // Создаем космическую пыль
+        function createSpaceDust() {
+            const dustCount = window.innerWidth < 768 ? 5 : 10;
+            
+            for (let i = 0; i < dustCount; i++) {
+                const dust = document.createElement('div');
+                dust.classList.add('space-dust');
+                
+                const size = Math.random() * 100 + 50;
+                dust.style.width = `${size}px`;
+                dust.style.height = `${size}px`;
+                
+                dust.style.left = `${Math.random() * 100}vw`;
+                dust.style.top = `${Math.random() * 100}vh`;
+                
+                // Разные скорости и направления
+                const dtx = (Math.random() - 0.5) * 100;
+                const dty = (Math.random() - 0.5) * 100;
+                dust.style.setProperty('--dtx', `${dtx}px`);
+                dust.style.setProperty('--dty', `${dty}px`);
+                
+                dust.style.animationDuration = `${Math.random() * 60 + 30}s`;
+                dust.style.animationDelay = `${Math.random() * 10}s`;
+                
+                // Случайный цвет пыли
+                const colors = [
+                    'rgba(200, 200, 255, 0.1)',
+                    'rgba(150, 150, 255, 0.08)',
+                    'rgba(100, 100, 255, 0.06)',
+                    'rgba(255, 200, 200, 0.07)',
+                    'rgba(200, 255, 200, 0.05)'
+                ];
+                dust.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                document.body.appendChild(dust);
+            }
+        }
+        
+        // Создаем туманности
+        function createNebulas() {
+            const nebulaCount = 3;
+            const colors = [
+                'rgba(0, 100, 255, 0.1)',
+                'rgba(255, 0, 200, 0.1)',
+                'rgba(0, 255, 150, 0.1)'
+            ];
+            
+            for (let i = 0; i < nebulaCount; i++) {
+                const nebula = document.createElement('div');
+                nebula.classList.add('nebula');
+                
+                const size = Math.random() * 500 + 300;
+                nebula.style.width = `${size}px`;
+                nebula.style.height = `${size}px`;
+                
+                nebula.style.left = `${Math.random() * 100}vw`;
+                nebula.style.top = `${Math.random() * 100}vh`;
+                
+                nebula.style.background = colors[i];
+                nebula.style.animationDuration = `${Math.random() * 20 + 10}s`;
+                nebula.style.animationDelay = `${Math.random() * 5}s`;
+                
+                document.body.appendChild(nebula);
+            }
+        }
+        
+        // Создаем кометы
+        function createComet() {
+            const comet = document.createElement('div');
+            comet.classList.add('comet');
+            
+            comet.style.left = `${Math.random() * 100}vw`;
+            comet.style.top = `${Math.random() * 100}vh`;
+            
+            // Размер и цвет кометы
+            const size = Math.random() * 4 + 2;
+            comet.style.width = `${size}px`;
+            comet.style.height = `${size}px`;
+            
+            // Длина хвоста
+            comet.style.boxShadow = `0 0 ${size * 5}px ${size}px var(--neon-blue)`;
+            
+            // Направление полета
+            const angle = Math.random() * 360;
+            const distance = 1500;
+            const endX = Math.cos(angle * Math.PI / 180) * distance;
+            const endY = Math.sin(angle * Math.PI / 180) * distance;
+            
+            comet.style.animation = `comet-fly ${Math.random() * 5 + 3}s linear`;
+            
+            document.body.appendChild(comet);
+            
+            // Удаляем комету после анимации
+            setTimeout(() => {
+                comet.remove();
+            }, 10000);
+        }
+        
+        // Бинарный код
+        function createMatrixCode() {
+            const chars = "01";
+            const elements = document.querySelectorAll('.binary-code');
+            elements.forEach(el => {
+                let text = el.textContent;
+                setInterval(() => {
+                    let newText = "";
+                    for (let i = 0; i < text.length; i++) {
+                        if (Math.random() > 0.97) {
+                            newText += chars.charAt(Math.floor(Math.random() * chars.length));
+                        } else {
+                            newText += text.charAt(i);
+                        }
+                    }
+                    el.textContent = newText;
+                }, 100);
+            });
+        }
+        
+        // Таймер обратного отсчета
+        function startCountdown() {
+            const countdownElement = document.getElementById('countdown');
+            const blackHole = document.getElementById('blackHole');
+            
+            let hours = 4;
+            let minutes = 0;
+            let seconds = 0;
+            
+            const interval = setInterval(() => {
+                if (seconds === 0) {
+                    if (minutes === 0) {
+                        if (hours === 0) {
+                            // Время вышло
+                            clearInterval(interval);
+                            countdownElement.textContent = "⏰ КАТАСТРОФА! СЕРДЦЕ ПРЕВРАТИЛОСЬ В ЧЁРНУЮ ДЫРУ";
+                            
+                            // Показываем черную дыру
+                            blackHole.style.opacity = '0.8';
+                            blackHole.style.transform = 'scale(30)';
+                            blackHole.style.transition = 'opacity 3s, transform 10s';
+                            
+                            // Создаем эффект всасывания
+                            document.body.style.transition = 'all 5s';
+                            document.body.style.filter = 'brightness(0.5) blur(2px)';
+                            
+                            return;
+                        }
+                        hours--;
+                        minutes = 59;
+                    } else {
+                        minutes--;
+                    }
+                    seconds = 59;
+                } else {
+                    seconds--;
+                }
+                
+                // Обновляем таймер
+                const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                countdownElement.textContent = `⏳ ВРЕМЯ ДО КАТАСТРОФЫ: ${formattedTime}`;
+                
+                // Увеличиваем интенсивность пульсации при приближении к концу
+                if (hours === 0 && minutes < 30) {
+                    const intensity = (30 - minutes) / 30;
+                    countdownElement.style.animation = `pulse ${1 - intensity * 0.8}s infinite alternate`;
+                }
+                
+                // Показываем черную дыру в последние 10 минут
+                if (hours === 0 && minutes < 10) {
+                    blackHole.style.opacity = '0.3';
+                    blackHole.style.left = `${Math.random() * 70 + 15}%`;
+                    blackHole.style.top = `${Math.random() * 70 + 15}%`;
+                }
+            }, 1000);
+        }
+        
+        // Глитч-эффект для заголовка
+        function addGlitchEffect() {
+            const header = document.querySelector('.header');
+            setInterval(() => {
+                header.style.animation = 'none';
+                setTimeout(() => {
+                    header.style.animation = 'glitch 5s infinite alternate, border-pulse 3s infinite';
+                }, 10);
+            }, 10000);
+        }
+        
+        // Эффект уничтожения документа
+        function startDocumentDestruction() {
+            const destructionElement = document.getElementById('documentDestruction');
+            let countdown = 20; // 10 секунд на уничтожение
+            
+            // Создаем эффект горения
+            function createBurnEffect(x, y) {
+                const burn = document.createElement('div');
+                burn.classList.add('burn-effect');
+                burn.style.left = `${x}px`;
+                burn.style.top = `${y}px`;
+                document.body.appendChild(burn);
+                
+                // Создаем дыру в документе
+                const hole = document.createElement('div');
+                hole.classList.add('burn-hole');
+                hole.style.left = `${x}px`;
+                hole.style.top = `${y}px`;
+                document.body.appendChild(hole);
+                
+                // Анимация исчезновения
+                setTimeout(() => {
+                    burn.style.transition = 'opacity 1s';
+                    burn.style.opacity = '0';
+                    setTimeout(() => burn.remove(), 1000);
+                }, 500);
+            }
+            
+            // Случайные точки горения
+            const burnInterval = setInterval(() => {
+                if (countdown <= 0) return;
+                
+                // Создаем несколько точек горения
+                for (let i = 0; i < 3; i++) {
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight;
+                    createBurnEffect(x, y);
+                }
+                
+                // Увеличиваем общую темноту
+                destructionElement.style.opacity = (10 - countdown) / 10;
+                
+                countdown--;
+                
+                if (countdown <= 0) {
+                    clearInterval(burnInterval);
+                    // В конце полностью затемняем экран
+                    setTimeout(() => {
+                        destructionElement.style.opacity = '1';
+                        destructionElement.style.background = 'black';
+                        
+                        // Удаляем все элементы документа
+                        setTimeout(() => {
+                            document.querySelectorAll('body > *:not(.document-destruction)').forEach(el => {
+                                el.style.transition = 'opacity 1s';
+                                el.style.opacity = '0';
+                                setTimeout(() => el.remove(), 1000);
+                            });
+                        }, 1000);
+                    }, 1000);
+                }
+            }, 1000);
+            
+            // Обработчик кликов для эффекта горения
+            document.addEventListener('click', (e) => {
+                createBurnEffect(e.clientX, e.clientY);
+            });
+        }
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            createSpaceParticles();
+            createSpaceDust();
+            createNebulas();
+            createMatrixCode();
+            addGlitchEffect();
+            startCountdown();
+            
+            // Запускаем кометы каждые 5-15 секунд
+            setInterval(createComet, 5000 + Math.random() * 10000);
+            
+            // Первая комета появляется через 2 секунды
+            setTimeout(createComet, 1000);
+            
+            // Запускаем уничтожение документа через 5 секунд после загрузки
+            setTimeout(startDocumentDestruction, 15000);
+            
+            // Адаптация для мобильных - уменьшаем количество эффектов
+            if (window.innerWidth < 768) {
+                document.body.style.backgroundSize = "150px 150px, 200px 200px, 180px 180px, 250px 250px, 300px 300px";
+            }
+        });
+        
+        // Реакция на изменение размера окна
+        window.addEventListener('resize', () => {
+            if (window.innerWidth < 768) {
+                document.body.style.backgroundSize = "150px 150px, 200px 200px, 180px 180px, 250px 250px, 300px 300px";
+            } else {
+                document.body.style.backgroundSize = "200px 200px, 300px 300px, 250px 250px, 350px 350px, 400px 400px, 500px 500px, 600px 600px, 700px 700px, 800px 800px, 900px 900px, 1000px 1000px";
+            }
+        });
+    </script>
+</body>
+</html>
