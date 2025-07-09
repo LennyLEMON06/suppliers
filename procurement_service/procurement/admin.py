@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, Supplier, Price
+from .models import Product, Supplier, Price, Category
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -8,10 +8,16 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('name',)  # Поиск по названию
     ordering = ('name',)  # Сортировка по названию
 
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)
+
 @admin.register(Supplier)
 class SupplierAdmin(admin.ModelAdmin):
-    list_display = ('name', 'contact_info')  # Показываем в списке
-    search_fields = ('name',)  # Поиск по названию
+    list_display = ('name', 'inn', 'contact_info', 'category')  # добавили category
+    list_filter = ('category',)  # фильтрация по категории
+    search_fields = ('name',)
 
 @admin.register(Price)
 class PriceAdmin(admin.ModelAdmin):
