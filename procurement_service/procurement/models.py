@@ -11,16 +11,31 @@ class Product(models.Model):
     quantity = models.IntegerField(default=0, validators=[MinValueValidator(0)], verbose_name=u"Количество в месяц")  # (по умолчанию 0)
     unit = models.CharField(max_length=50, verbose_name=u"Единица измерения")
     last_updated = models.DateTimeField(auto_now=True)
+
     def __str__(self):
         return self.name
+        
     class Meta:
         verbose_name = 'Продукт'
         verbose_name_plural = 'Продукты'
+
+class Category(models.Model):
+    name = models.CharField(max_length=255, verbose_name="Город")
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Город'
+        verbose_name_plural = 'Города'
 
 
 class Supplier(models.Model):
     name = models.CharField(max_length=255, verbose_name=u"Наименование")
     contact_info = models.TextField(verbose_name=u"Контактная информация")
+    inn = models.CharField(max_length=12, null=True, blank=True, verbose_name="ИНН")
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Город")
+    is_hidden = models.BooleanField(default=False, verbose_name="Скрыт")
 
     def __str__(self):
         return self.name
